@@ -379,6 +379,47 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .summary-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .mypage-section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 10px; font-weight: 500; }
 
+/* PACE CALCULATOR */
+.pace-calc {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 22px;
+}
+.pace-calc-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; font-weight: 500; }
+.pace-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.pace-input {
+  flex: 1; background: var(--bg4); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  font-size: 14px; color: var(--text); font-family: 'DM Mono', monospace;
+  outline: none; text-align: center; transition: border-color 0.15s;
+}
+.pace-input:focus { border-color: var(--accent); }
+.pace-sep { color: var(--text3); font-size: 13px; }
+.pace-label { font-size: 12px; color: var(--text3); min-width: 50px; }
+.pace-result {
+  background: var(--accent-dim); border: 0.5px solid rgba(200,255,0,0.2);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.pace-result-time { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--accent); }
+.pace-result-label { font-size: 11px; color: var(--text2); }
+
+/* MAP ROUTE INFO OVERLAY */
+.route-info-overlay {
+  position: absolute; top: 10px; left: 10px; z-index: 30;
+  background: rgba(13,13,13,0.92); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 8px 14px;
+  display: none; align-items: center; gap: 10px;
+  backdrop-filter: blur(8px);
+}
+.route-info-overlay.visible { display: flex; }
+.route-info-km { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: var(--accent); }
+.route-info-name { font-size: 12px; color: var(--text2); }
+.route-info-close {
+  width: 22px; height: 22px; background: var(--bg4); border: none;
+  border-radius: 50%; color: var(--text3); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; margin-left: 4px;
+}
+
 /* TOAST */
 .toast {
   position: fixed; bottom: 80px; left: 50%;
@@ -418,6 +459,13 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   <!-- MAP -->
   <div class="map-area" id="mapArea">
     <div id="kakaoMap"></div>
+    <div class="route-info-overlay" id="routeInfoOverlay">
+      <div>
+        <div class="route-info-km" id="routeInfoKm"></div>
+        <div class="route-info-name" id="routeInfoName"></div>
+      </div>
+      <button class="route-info-close" onclick="clearRouteOverlay()">✕</button>
+    </div>
     <div class="map-overlay">
       <div class="map-overlay-btn" onclick="moveToMyLocation()">⊕</div>
     </div>
@@ -563,6 +611,8 @@ function showMapPlaceholder() {
 let kakaoMap = null;
 let myMarker = null;
 let courseMarkers = [];
+let activePolyline = null;
+let activeRouteMarkers = [];
 
 function initKakaoMap() {
   const container = document.getElementById('kakaoMap');
@@ -579,12 +629,9 @@ function initKakaoMap() {
       const lng = pos.coords.longitude;
       const myPos = new kakao.maps.LatLng(lat, lng);
       kakaoMap.setCenter(myPos);
-
-      // 내 위치 마커
       const myContent = `<div style="width:14px;height:14px;border-radius:50%;background:#c8ff00;border:2px solid #fff;box-shadow:0 0 0 6px rgba(200,255,0,0.25)"></div>`;
       const myOverlay = new kakao.maps.CustomOverlay({ position: myPos, content: myContent });
       myOverlay.setMap(kakaoMap);
-
     }, () => {});
   }
 
@@ -593,7 +640,6 @@ function initKakaoMap() {
 
 function renderMapMarkers() {
   if (!kakaoMap || !COURSES || !COURSES.length) return;
-
   courseMarkers.forEach(m => m.setMap(null));
   courseMarkers = [];
 
@@ -602,10 +648,11 @@ function renderMapMarkers() {
 
   filtered.forEach(c => {
     const color = colorMap[c.type] || '#888';
+    const isSelected = currentCourseId === c.id;
     const content = `
-      <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer" onclick="openDetail(${c.id})">
-        <div style="background:#161616;border:1px solid ${color};border-radius:6px;padding:3px 8px;font-size:11px;color:${color};font-family:'Noto Sans KR',sans-serif;white-space:nowrap;margin-bottom:4px;">${c.name}</div>
-        <div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid #0d0d0d;"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer" onclick="handlePinClick(${c.id})">
+        <div style="background:${isSelected?color+'22':'#161616'};border:1.5px solid ${color};border-radius:8px;padding:4px 10px;font-size:11px;color:${color};font-family:'Noto Sans KR',sans-serif;white-space:nowrap;margin-bottom:4px;font-weight:${isSelected?'700':'400'};box-shadow:${isSelected?'0 0 10px '+color+'66':'none'};transition:all 0.2s;">${c.name}</div>
+        <div style="width:${isSelected?12:8}px;height:${isSelected?12:8}px;border-radius:50%;background:${color};border:2px solid #0d0d0d;box-shadow:${isSelected?'0 0 8px '+color:'none'};transition:all 0.2s;"></div>
       </div>`;
     const overlay = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(c.lat, c.lng),
@@ -615,6 +662,75 @@ function renderMapMarkers() {
     overlay.setMap(kakaoMap);
     courseMarkers.push(overlay);
   });
+}
+
+function handlePinClick(id) {
+  // 핀 클릭: 경로 그리고 상세도 오픈
+  showCourseRoute(id);
+  openDetail(id);
+}
+
+function showCourseRoute(id) {
+  if (!kakaoMap) return;
+  const c = COURSES.find(x => x.id === id);
+  if (!c || !c.path || !c.path.length) return;
+
+  // 기존 경로 제거
+  clearRouteOverlay();
+
+  const colorMap = { scenic: '#4d9fff', quiet: '#9d7fff', night: '#ff9d3d', workout: '#ff4d4d' };
+  const color = colorMap[c.type] || '#c8ff00';
+
+  // Polyline 경로 그리기
+  const linePath = c.path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+  activePolyline = new kakao.maps.Polyline({
+    map: kakaoMap,
+    path: linePath,
+    strokeWeight: 5,
+    strokeColor: color,
+    strokeOpacity: 0.85,
+    strokeStyle: 'solid'
+  });
+
+  // 시작점 마커 🟢
+  const startContent = `<div style="display:flex;flex-direction:column;align-items:center">
+    <div style="background:#0d0d0d;border:1.5px solid #c8ff00;border-radius:20px;padding:2px 8px;font-size:10px;color:#c8ff00;font-family:'Noto Sans KR',sans-serif;margin-bottom:3px;white-space:nowrap;">▶ 출발</div>
+    <div style="width:10px;height:10px;border-radius:50%;background:#c8ff00;border:2px solid #0d0d0d;"></div>
+  </div>`;
+  const startOverlay = new kakao.maps.CustomOverlay({
+    position: linePath[0], content: startContent, yAnchor: 1
+  });
+  startOverlay.setMap(kakaoMap);
+  activeRouteMarkers.push(startOverlay);
+
+  // 도착점 마커 🔴
+  const endPt = linePath[linePath.length - 1];
+  const endContent = `<div style="display:flex;flex-direction:column;align-items:center">
+    <div style="background:#0d0d0d;border:1.5px solid ${color};border-radius:20px;padding:2px 8px;font-size:10px;color:${color};font-family:'Noto Sans KR',sans-serif;margin-bottom:3px;white-space:nowrap;">■ 도착</div>
+    <div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid #0d0d0d;"></div>
+  </div>`;
+  const endOverlay = new kakao.maps.CustomOverlay({
+    position: endPt, content: endContent, yAnchor: 1
+  });
+  endOverlay.setMap(kakaoMap);
+  activeRouteMarkers.push(endOverlay);
+
+  // 지도 zoom & 중앙 이동 — 경로 전체가 보이게
+  const bounds = new kakao.maps.LatLngBounds();
+  linePath.forEach(p => bounds.extend(p));
+  kakaoMap.setBounds(bounds, 60); // 패딩 60px
+
+  // 지도 상단 route info 표시
+  document.getElementById('routeInfoKm').textContent = c.km + 'km';
+  document.getElementById('routeInfoName').textContent = c.name;
+  document.getElementById('routeInfoOverlay').classList.add('visible');
+}
+
+function clearRouteOverlay() {
+  if (activePolyline) { activePolyline.setMap(null); activePolyline = null; }
+  activeRouteMarkers.forEach(m => m.setMap(null));
+  activeRouteMarkers = [];
+  document.getElementById('routeInfoOverlay').classList.remove('visible');
 }
 
 function moveToMyLocation() {
@@ -750,6 +866,7 @@ function openDetail(id) {
   currentCourseId = id;
   addRecent(id);
   renderList();
+  renderMapMarkers(); // 선택된 핀 강조 업데이트
   const c = COURSES.find(x => x.id === id);
   if (!c) return;
 
@@ -798,6 +915,28 @@ function openDetail(id) {
         <div class="detail-stat-sub">저장 ${c.pop*68+42}명</div>
       </div>
     </div>
+
+    <div class="pace-calc">
+      <div class="pace-calc-title">⏱ 페이스 계산기 — 내가 뛰면 얼마나 걸릴까?</div>
+      <div class="pace-row">
+        <span class="pace-label">페이스</span>
+        <input class="pace-input" type="number" id="paceMin" value="6" min="3" max="15" style="max-width:52px" oninput="calcPace(${c.km})">
+        <span class="pace-sep">분</span>
+        <input class="pace-input" type="number" id="paceSec" value="0" min="0" max="59" style="max-width:52px" oninput="calcPace(${c.km})">
+        <span class="pace-sep">초 / km</span>
+      </div>
+      <div class="pace-result">
+        <div>
+          <div class="pace-result-time" id="paceResultTime">45분 00초</div>
+          <div class="pace-result-label">예상 완주 시간</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;color:var(--text2)" id="paceResultKcal"></div>
+          <div style="font-size:11px;color:var(--text3)">예상 소모 칼로리 (70kg 기준)</div>
+        </div>
+      </div>
+    </div>
+
     <div class="detail-section">
       <div class="detail-section-title">코스 분위기</div>
       <div class="vibe-grid">${vibeItems}</div>
@@ -832,6 +971,29 @@ function openDetail(id) {
   btn.className = 'detail-save-btn' + (isSaved?' saved':'');
   btn.textContent = isSaved ? '♥ 저장됨' : '♡ 저장하기';
   document.getElementById('detailOverlay').classList.add('open');
+
+  // 지도에 경로 그리기
+  showCourseRoute(id);
+  // 초기 페이스 계산
+  calcPace(c.km);
+}
+
+// ── 페이스 계산기 ──
+function calcPace(km) {
+  const minEl = document.getElementById('paceMin');
+  const secEl = document.getElementById('paceSec');
+  if (!minEl || !secEl) return;
+  const totalSec = (parseInt(minEl.value)||6) * 60 + (parseInt(secEl.value)||0);
+  const totalRunSec = Math.round(totalSec * km);
+  const h = Math.floor(totalRunSec / 3600);
+  const m = Math.floor((totalRunSec % 3600) / 60);
+  const s = totalRunSec % 60;
+  const timeStr = h > 0
+    ? `${h}시간 ${m}분 ${s.toString().padStart(2,'0')}초`
+    : `${m}분 ${s.toString().padStart(2,'0')}초`;
+  const kcal = Math.round(km * 70 * 1.05); // 70kg 기준 약 1.05kcal/kg/km
+  document.getElementById('paceResultTime').textContent = timeStr;
+  document.getElementById('paceResultKcal').textContent = `약 ${kcal} kcal`;
 }
 
 function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); }
