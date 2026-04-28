@@ -592,7 +592,7 @@ function initKakaoMap() {
 }
 
 function renderMapMarkers() {
-  if (!kakaoMap || !window.COURSES) return;
+  if (!kakaoMap || !COURSES || !COURSES.length) return;
 
   courseMarkers.forEach(m => m.setMap(null));
   courseMarkers = [];
@@ -646,6 +646,8 @@ fetch('courses.json')
     document.getElementById('courseCount').textContent = data.length;
     renderList();
     loadKakaoMap();
+    // 카카오맵 이미 로드됐으면 바로 마커 렌더
+    setTimeout(() => renderMapMarkers(), 1500);
   })
   .catch(() => {
     // 파일 직접 열 때(file://) fetch 안 됨 — 서버 필요 안내
