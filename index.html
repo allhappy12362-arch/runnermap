@@ -420,8 +420,186 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   display: flex; align-items: center; justify-content: center; margin-left: 4px;
 }
 
+/* 검색바 */
+.search-bar-wrap {
+  display: flex; gap: 8px; padding: 10px 14px 0;
+}
+.search-input {
+  flex: 1; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 9px 12px;
+  font-size: 13px; color: var(--text); font-family: 'Noto Sans KR', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--accent); }
+.sort-btn {
+  width: 38px; height: 38px; border-radius: var(--radius-sm);
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  color: var(--text2); font-size: 16px; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.sort-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+/* 날씨 */
+.weather-chip {
+  font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 4px;
+}
+
+/* 공유 버튼 */
+.detail-share-btn {
+  width: 44px; height: 44px; border-radius: var(--radius-sm);
+  background: var(--bg4); border: 0.5px solid var(--border2);
+  color: var(--text2); font-size: 16px; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.detail-share-btn:hover { background: var(--bg3); color: var(--text); }
+
+/* FAB 제보 버튼 */
+.fab-report {
+  position: absolute; bottom: 18px; right: 14px; z-index: 40;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--accent); border: none; color: #0d0d0d;
+  font-size: 26px; font-weight: 400; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4); transition: transform 0.15s;
+}
+.fab-report:hover { transform: scale(1.08); }
+.fab-report:active { transform: scale(0.95); }
+
+/* 후기 섹션 */
+.review-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.review-input {
+  flex: 1; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  font-size: 13px; color: var(--text); font-family: 'Noto Sans KR', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.review-input:focus { border-color: var(--accent); }
+.review-submit-btn {
+  padding: 0 14px; background: var(--accent); border: none; border-radius: var(--radius-sm);
+  color: #0d0d0d; font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; transition: background 0.15s;
+}
+.review-submit-btn:hover { background: #d4ff00; }
+.review-list { display: flex; flex-direction: column; gap: 8px; }
+.review-item {
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.review-item-text { font-size: 13px; color: var(--text); margin-bottom: 4px; line-height: 1.5; }
+.review-item-meta { font-size: 11px; color: var(--text3); }
+.review-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 16px 0; }
+
+/* 뱃지 시스템 */
+.badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.badge-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 8px; border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border); background: var(--bg3);
+  text-align: center; transition: border-color 0.15s;
+}
+.badge-item.earned { border-color: var(--accent); background: var(--accent-dim); }
+.badge-item.locked { opacity: 0.4; }
+.badge-icon { font-size: 24px; }
+.badge-name { font-size: 10px; color: var(--text2); font-weight: 500; }
+.badge-cond { font-size: 9px; color: var(--text3); }
+.badge-summary {
+  display: flex; gap: 12px; margin-bottom: 16px;
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.badge-summary-stat { flex: 1; text-align: center; }
+.badge-summary-num { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--accent); }
+.badge-summary-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* 제보 모달 */
+.report-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200; display: none; align-items: flex-end; justify-content: center;
+}
+.report-overlay.open { display: flex; }
+.report-sheet {
+  background: var(--bg2); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 480px; max-height: 85vh;
+  overflow-y: auto; padding: 20px 20px 48px;
+  animation: slideUp 0.25s ease;
+}
+.report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.report-title { font-size: 18px; font-weight: 700; }
+.report-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+.report-close {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--bg4);
+  border: none; color: var(--text2); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.report-type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 4px; }
+.report-type-btn {
+  padding: 9px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-size: 11px; cursor: pointer;
+  text-align: center; transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif; line-height: 1.4;
+}
+.report-type-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+.report-google-btn {
+  width: 100%; padding: 14px; border-radius: var(--radius); border: none;
+  background: var(--accent); color: #0d0d0d; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 10px; font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.15s;
+}
+.report-google-btn:hover { background: #d4ff00; }
+.report-how {
+  background: var(--bg3); border-radius: var(--radius-sm); padding: 12px 14px;
+  margin-bottom: 16px; font-size: 12px; color: var(--text2); line-height: 1.8;
+}
+
 /* TOAST */
 .toast {
+  position: absolute; bottom: 18px; right: 14px; z-index: 40;
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--accent); border: none; color: #0d0d0d;
+  font-size: 26px; font-weight: 400; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4); transition: transform 0.15s, background 0.15s;
+}
+.fab-report:hover { transform: scale(1.08); background: #d4ff00; }
+.fab-report:active { transform: scale(0.95); }
+
+/* 제보 모달 */
+.report-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200; display: none; align-items: flex-end; justify-content: center;
+}
+.report-overlay.open { display: flex; }
+.report-sheet {
+  background: var(--bg2); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 480px; max-height: 90vh;
+  overflow-y: auto; padding: 20px 20px 40px;
+  animation: slideUp 0.25s ease;
+}
+.report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.report-title { font-size: 18px; font-weight: 700; }
+.report-sub { font-size: 13px; color: var(--text3); margin-bottom: 22px; }
+.report-close { width: 32px; height: 32px; border-radius: 50%; background: var(--bg4); border: none; color: var(--text2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.report-type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 4px; }
+.report-type-btn {
+  padding: 8px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-size: 12px; cursor: pointer;
+  text-align: center; transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
+}
+.report-type-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 500; }
+.report-submit {
+  width: 100%; padding: 14px; border-radius: var(--radius); border: none;
+  background: var(--accent); color: #0d0d0d; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 8px; font-family: 'Noto Sans KR', sans-serif;
+  transition: background 0.15s;
+}
+.report-submit:hover { background: #d4ff00; }
+.report-submit:disabled { background: var(--bg4); color: var(--text3); cursor: not-allowed; }
+.report-success {
+  text-align: center; padding: 30px 20px;
+}
+.report-success-icon { font-size: 40px; margin-bottom: 12px; }
+.report-success-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.report-success-sub { font-size: 13px; color: var(--text3); }
   position: fixed; bottom: 80px; left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: var(--bg4); border: 0.5px solid var(--border2);
@@ -469,10 +647,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="map-overlay">
       <div class="map-overlay-btn" onclick="moveToMyLocation()">⊕</div>
     </div>
+    <button class="fab-report" onclick="openReportModal()" title="코스 제보하기">+</button>
   </div>
 
   <!-- RIGHT PANEL -->
   <div class="right-panel">
+    <div class="search-bar-wrap">
+      <input class="search-input" type="text" id="searchInput" placeholder="🔍 코스 이름 또는 지역 검색" oninput="renderList()">
+      <button class="sort-btn" id="sortBtn" onclick="toggleSort()" title="내 위치 기준 정렬">📍</button>
+    </div>
     <div class="filter-bar">
       <div class="filter-chip active" data-filter="all" onclick="setFilter(this,'all')">전체</div>
       <div class="filter-chip" data-filter="scenic" onclick="setFilter(this,'scenic')">🌅 경치 좋은</div>
@@ -484,6 +667,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="list-area">
       <div class="list-header">
         <div>내 주변 코스 <span id="courseCount">-</span>개</div>
+        <div class="weather-chip" id="weatherChip"></div>
       </div>
       <div class="course-list" id="courseList">
         <div class="loading">코스 불러오는 중...</div>
@@ -505,6 +689,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="detail-bottom-bar">
       <button class="detail-save-btn" id="detailSaveBtn" onclick="toggleDetailSave()">♡ 저장하기</button>
       <button class="detail-record-btn" onclick="openRecordModal()">📝 기록 남기기</button>
+      <button class="detail-share-btn" onclick="shareCurrentCourse()">🔗</button>
     </div>
   </div>
 </div>
@@ -558,6 +743,54 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   </div>
 </div>
 
+<!-- REPORT MODAL -->
+<div class="report-overlay" id="reportOverlay" onclick="closeReportOnBg(event)">
+  <div class="report-sheet">
+    <div class="report-header">
+      <div class="report-title">코스 제보하기</div>
+      <button class="report-close" onclick="closeReportModal()">✕</button>
+    </div>
+    <div class="report-sub">직접 달려본 코스를 공유해주세요 🏃</div>
+
+    <div class="form-group">
+      <label class="form-label">코스 이름 *</label>
+      <input class="form-input" type="text" id="rName" placeholder="예: 망원한강공원 코스">
+    </div>
+    <div class="form-group">
+      <label class="form-label">지역 *</label>
+      <input class="form-input" type="text" id="rRegion" placeholder="예: 마포구 망원동">
+    </div>
+    <div class="form-group">
+      <label class="form-label">시작 위치 *</label>
+      <input class="form-input" type="text" id="rAddress" placeholder="예: 망원한강공원 주차장 앞">
+    </div>
+    <div class="form-group">
+      <label class="form-label">거리 (km) *</label>
+      <input class="form-input" type="number" id="rKm" placeholder="예: 5.2" step="0.1" min="0.5" max="50">
+    </div>
+    <div class="form-group">
+      <label class="form-label">코스 타입 *</label>
+      <div class="report-type-grid">
+        <button class="report-type-btn" onclick="selectReportType(this,'scenic')">🌅<br>경치좋음</button>
+        <button class="report-type-btn" onclick="selectReportType(this,'quiet')">🌿<br>조용함</button>
+        <button class="report-type-btn" onclick="selectReportType(this,'night')">🌙<br>야간러닝</button>
+        <button class="report-type-btn" onclick="selectReportType(this,'workout')">💪<br>업다운</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">한줄 설명 *</label>
+      <input class="form-input" type="text" id="rDesc" placeholder="예: 야경 보며 뛰기 딱 좋은 코스" maxlength="40">
+    </div>
+    <div class="form-group">
+      <label class="form-label">추가 설명 (선택)</label>
+      <input class="form-input" type="text" id="rExtra" placeholder="화장실 있음, 주차 편함 등" maxlength="80">
+    </div>
+    <button class="report-google-btn" onclick="submitReport()">
+      📍 제보 등록하기
+    </button>
+  </div>
+</div>
+
 <!-- MY PAGE -->
 <div class="mypage-overlay" id="mypageOverlay">
   <div class="mypage-header">
@@ -568,6 +801,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
     <div class="mypage-tab active" id="tabSaved" onclick="switchMyTab('saved')">저장한 코스</div>
     <div class="mypage-tab" id="tabRecent" onclick="switchMyTab('recent')">최근 본 코스</div>
     <div class="mypage-tab" id="tabRecords" onclick="switchMyTab('records')">내 기록</div>
+    <div class="mypage-tab" id="tabBadge" onclick="switchMyTab('badge')">🏅 뱃지</div>
+    <div class="mypage-tab" id="tabReports" onclick="switchMyTab('reports')">내 제보</div>
   </div>
   <div class="mypage-body" id="mypageBody"></div>
 </div>
@@ -649,11 +884,46 @@ function renderMapMarkers() {
   filtered.forEach(c => {
     const color = colorMap[c.type] || '#888';
     const isSelected = currentCourseId === c.id;
-    const content = `
-      <div style="display:flex;flex-direction:column;align-items:center;cursor:pointer" onclick="handlePinClick(${c.id})">
-        <div style="background:${isSelected?color+'22':'#161616'};border:1.5px solid ${color};border-radius:8px;padding:4px 10px;font-size:11px;color:${color};font-family:'Noto Sans KR',sans-serif;white-space:nowrap;margin-bottom:4px;font-weight:${isSelected?'700':'400'};box-shadow:${isSelected?'0 0 10px '+color+'66':'none'};transition:all 0.2s;">${c.name}</div>
-        <div style="width:${isSelected?12:8}px;height:${isSelected?12:8}px;border-radius:50%;background:${color};border:2px solid #0d0d0d;box-shadow:${isSelected?'0 0 8px '+color:'none'};transition:all 0.2s;"></div>
-      </div>`;
+    const size = isSelected ? 28 : 22;
+    const r = size;
+    // 육각형 꼭짓점 계산 (flat-top)
+    const hex = (s) => {
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 180 * (60 * i - 30);
+        pts.push(`${s*Math.cos(a)},${s*Math.sin(a)}`);
+      }
+      return pts.join(' ');
+    };
+    const s = size;
+    const tailY = s + 10;
+    const dotY = tailY + 2;
+    // 사람 비율 (핀 크기에 비례)
+    const headR = s * 0.22;
+    const headCY = -s * 0.44;
+    const bodyT = headCY + headR;
+    const bodyB = s * 0.27;
+    const armY = bodyT + (bodyB - bodyT) * 0.35;
+    const legSplit = bodyB;
+    const legLen = s * 0.42;
+    const armSpread = s * 0.35;
+
+    const svgPin = `<svg xmlns="http://www.w3.org/2000/svg" width="${s*2+8}" height="${s*2+dotY+6}" viewBox="${-s-4} ${-s-4} ${s*2+8} ${s*2+dotY+6}" style="overflow:visible;display:block">
+      ${isSelected ? `<polygon points="${hex(s+5)}" fill="${color}" opacity="0.18"/>` : ''}
+      <polygon points="${hex(s)}" fill="${color}" opacity="${isSelected?0.22:0.12}"/>
+      <polygon points="${hex(s)}" fill="none" stroke="${color}" stroke-width="${isSelected?2:1.5}"/>
+      ${isSelected ? `<polygon points="${hex(s)}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="3 3" transform="scale(1.25)" opacity="0.6"/>` : ''}
+      <circle cx="0" cy="${headCY}" r="${headR}" fill="${color}"/>
+      <line x1="0" y1="${bodyT}" x2="0" y2="${bodyB}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+      <line x1="${-armSpread}" y1="${armY+s*0.08}" x2="0" y2="${armY-s*0.06}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="${armY-s*0.06}" x2="${armSpread}" y2="${armY+s*0.1}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="${legSplit}" x2="${-legLen*0.55}" y2="${legSplit+legLen}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="${legSplit}" x2="${legLen*0.62}" y2="${legSplit+legLen*0.88}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="${s}" x2="0" y2="${tailY}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="0" cy="${dotY}" r="2" fill="${color}"/>
+    </svg>`;
+
+    const content = `<div style="cursor:pointer;display:flex;justify-content:center" onclick="handlePinClick(${c.id})">${svgPin}</div>`;
     const overlay = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(c.lat, c.lng),
       content,
@@ -754,25 +1024,100 @@ let currentCourseId = null;
 let recordStar = 0, recordDiff = '', recordWant = '';
 let firstSave = localStorage.getItem('rm_firstsave') !== '1';
 
-// courses.json 불러오기
-fetch('courses.json')
-  .then(r => r.json())
-  .then(data => {
-    COURSES = data;
-    document.getElementById('courseCount').textContent = data.length;
+// ── Supabase에서 코스 데이터 로드 ──
+// ── Supabase REST API 직접 호출 ──
+const SUPABASE_URL = 'https://zalmzgvikgayhhzuvxsx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InphbG16Z3Zpa2dheWhoenV2eHN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MzkxNTYsImV4cCI6MjA5MzAxNTE1Nn0.v4Ogyf7vE5C3NFQKnYamR0dQdKcWRMz2k_iyN89vefY';
+
+const sb = {
+  _headers: {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+  },
+  async select(table, params = '') {
+    if (SUPABASE_KEY === 'YOUR_SUPABASE_ANON_KEY') throw new Error('Supabase anon 키를 설정해주세요');
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
+      headers: this._headers
+    });
+    if (!res.ok) throw new Error(`DB 오류: ${res.status}`);
+    return res.json();
+  },
+  async insert(table, data) {
+    if (SUPABASE_KEY === 'YOUR_SUPABASE_ANON_KEY') throw new Error('Supabase anon 키를 설정해주세요');
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: this._headers,
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+    return true;
+  }
+};
+
+async function loadCourses() {
+  try {
+    const data = await sb.select('courses', 'status=eq.active&order=id');
+    if (!data || !data.length) throw new Error('코스 데이터가 없어요');
+
+    // DB 컬럼명 → 기존 코드 호환 변환
+    COURSES = data.map(c => ({
+      id: c.id,
+      name: c.name,
+      region: c.region,
+      lat: parseFloat(c.lat),
+      lng: parseFloat(c.lng),
+      km: parseFloat(c.km),
+      distFrom: c.dist_from,
+      type: c.type,
+      feel: c.feel,
+      desc: c.description,
+      pop: c.pop,
+      busyTime: c.busy_time,
+      busy: c.busy,
+      free: c.free,
+      review: c.review,
+      shortCourse: c.short_course,
+      tags: typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags,
+      vibes: typeof c.vibes === 'string' ? JSON.parse(c.vibes) : c.vibes,
+      facilities: typeof c.facilities === 'string' ? JSON.parse(c.facilities) : c.facilities,
+      fit: typeof c.fit === 'string' ? JSON.parse(c.fit) : c.fit,
+      downsides: typeof c.downsides === 'string' ? JSON.parse(c.downsides) : c.downsides,
+      groupSize: typeof c.group_size === 'string' ? JSON.parse(c.group_size) : c.group_size,
+      path: typeof c.path === 'string' ? JSON.parse(c.path) : c.path,
+      startPoint: typeof c.start_point === 'string' ? JSON.parse(c.start_point) : c.start_point,
+      mapLevel: c.map_level
+    }));
+
+    document.getElementById('courseCount').textContent = COURSES.length;
     renderList();
     loadKakaoMap();
-    // 카카오맵 이미 로드됐으면 바로 마커 렌더
     setTimeout(() => renderMapMarkers(), 1500);
-  })
-  .catch(() => {
-    // 파일 직접 열 때(file://) fetch 안 됨 — 서버 필요 안내
-    document.getElementById('courseList').innerHTML = `
-      <div style="padding:20px;font-size:13px;color:var(--text3);line-height:1.7;">
-        ⚠️ 로컬에서 직접 열면 JSON을 못 불러와요.<br>
-        <code>npx serve .</code> 또는 VSCode Live Server로 실행해주세요.
-      </div>`;
-  });
+    checkUrlCourse();
+  } catch(e) {
+    console.error('Supabase 실패, courses.json으로 대체:', e.message);
+    console.warn('💡 Supabase 연결 실패 원인: Supabase Dashboard → Project Settings → API → "anon public" 키(eyJ...로 시작하는 JWT)를 SUPABASE_KEY에 입력하세요.');
+    try {
+      const res = await fetch('courses.json');
+      const data = await res.json();
+      COURSES = data;
+      document.getElementById('courseCount').textContent = COURSES.length;
+      renderList();
+      loadKakaoMap();
+      setTimeout(() => renderMapMarkers(), 1500);
+      checkUrlCourse();
+    } catch(e2) {
+      document.getElementById('courseList').innerHTML =
+        '<div style="padding:20px;font-size:13px;color:var(--text3)">코스 데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div>';
+    }
+  }
+}
+
+loadCourses();
 
 function saveState() {
   localStorage.setItem('rm_saved', JSON.stringify(savedCourses));
@@ -789,11 +1134,22 @@ function addRecent(id) {
 
 // ── 필터 ──
 function getFilteredCourses() {
-  return COURSES.filter(c => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'short') return c.shortCourse;
-    return c.vibes[activeFilter] === true;
+  const query = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+  let result = COURSES.filter(c => {
+    const matchFilter = activeFilter === 'all' ? true :
+      activeFilter === 'short' ? c.shortCourse : c.vibes[activeFilter] === true;
+    const matchSearch = !query ||
+      c.name.toLowerCase().includes(query) ||
+      c.region.toLowerCase().includes(query) ||
+      (c.desc && c.desc.toLowerCase().includes(query));
+    return matchFilter && matchSearch;
   });
+  if (sortByLocation && myLat && myLng) {
+    result = result.slice().sort((a, b) =>
+      calcDist(myLat, myLng, a.lat, a.lng) - calcDist(myLat, myLng, b.lat, b.lng)
+    );
+  }
+  return result;
 }
 
 function setFilter(el, filter) {
@@ -820,7 +1176,7 @@ function cardHTML(c) {
   <div class="course-card ${c.type} ${currentCourseId===c.id?'selected':''}" onclick="openDetail(${c.id})">
     <div class="card-top">
       <div class="card-name">${c.name}</div>
-      <div class="card-distance-from">${c.distFrom}</div>
+      <div class="card-distance-from">${sortByLocation && myLat ? calcDist(myLat,myLng,c.lat,c.lng).toFixed(1)+'km' : c.distFrom}</div>
     </div>
     <div class="card-meta">
       <div class="card-km">${c.km}km</div>
@@ -963,6 +1319,14 @@ function openDetail(id) {
       <div class="downside-list">${c.downsides.map(d=>`<div class="downside-item">${d}</div>`).join('')}</div>
     </div>
     <div class="detail-section">
+      <div class="detail-section-title">한줄 후기</div>
+      <div class="review-input-row">
+        <input class="review-input" type="text" id="reviewInput" placeholder="오늘 뛰어봤어요. 한줄 남겨주세요!" maxlength="60">
+        <button class="review-submit-btn" onclick="submitReview(${c.id})">등록</button>
+      </div>
+      <div class="review-list" id="reviewList"></div>
+    </div>
+    <div class="detail-section">
       <div class="detail-section-title">한줄 총평</div>
       <div class="total-review">"${c.review}"</div>
     </div>`;
@@ -976,6 +1340,8 @@ function openDetail(id) {
   showCourseRoute(id);
   // 초기 페이스 계산
   calcPace(c.km);
+  // 후기 렌더링
+  renderReviews(id);
 }
 
 // ── 페이스 계산기 ──
@@ -1055,14 +1421,6 @@ function saveRecord() {
 let myTab='saved';
 function openMyPage(tab) { myTab=tab; document.getElementById('mypageOverlay').classList.add('open'); switchMyTab(tab); }
 function closeMyPage() { document.getElementById('mypageOverlay').classList.remove('open'); }
-function switchMyTab(tab) {
-  myTab=tab;
-  ['saved','recent','records'].forEach(t=>{
-    const el=document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
-    if(el) el.classList.toggle('active',t===tab);
-  });
-  renderMyPage();
-}
 function renderMyPage() {
   const body=document.getElementById('mypageBody');
   const notice=`<div class="storage-notice">⚠ 이 기기에 저장된 정보예요. 브라우저 데이터를 삭제하면 사라질 수 있어요.</div>`;
@@ -1102,6 +1460,273 @@ function renderMyPage() {
         <div class="record-stars">${'★'.repeat(r.satisfaction)+'☆'.repeat(5-r.satisfaction)}</div>
         ${r.memo?`<div class="record-memo">"${r.memo}"</div>`:''}
       </div>`).join('');
+  }
+  if (myTab==='badge') {
+    renderBadgeTab(body, notice);
+  }
+  if (myTab==='reports') {
+    body.innerHTML = notice + '<div class="mypage-empty">불러오는 중...</div>';
+    const typeLabel = { scenic:'🌅 경치좋음', quiet:'🌿 조용함', night:'🌙 야간러닝', workout:'💪 업다운' };
+    sb.select('reports', 'order=created_at.desc&limit=50')
+      .then(data => {
+        if (!data || !data.length) {
+          body.innerHTML = notice + '<div class="mypage-empty">아직 제보한 코스가 없어요<br>지도에서 + 버튼을 눌러 제보해보세요!</div>';
+          return;
+        }
+        body.innerHTML = notice + `<div class="mypage-section-title">전체 제보 (${data.length}) — 검토 후 지도에 추가돼요</div>` +
+          data.map(r => `
+            <div class="record-item">
+              <div class="record-name">${r.name}</div>
+              <div class="record-meta">
+                <span class="record-meta-item">📍 ${r.region}</span>
+                <span class="record-meta-item">🏃 ${r.km}km</span>
+                <span class="record-meta-item">${typeLabel[r.type]||r.type}</span>
+                <span class="record-meta-item" style="color:${r.status==='approved'?'var(--accent)':'var(--text3)'}">
+                  ${r.status==='approved'?'✅ 승인됨':'⏳ 검토 중'}
+                </span>
+              </div>
+              <div class="record-memo">"${r.description}"</div>
+            </div>`).join('');
+      }).catch(() => {
+        body.innerHTML = notice + '<div class="mypage-empty">제보 목록을 불러오지 못했어요</div>';
+      });
+  }
+}
+
+// ── 후기 ──
+function getReviews(courseId) {
+  return JSON.parse(localStorage.getItem('rm_reviews_' + courseId) || '[]');
+}
+async function renderReviews(courseId) {
+  const list = document.getElementById('reviewList');
+  if (!list) return;
+  list.innerHTML = '<div class="review-empty">불러오는 중...</div>';
+  try {
+    const data = await sb.select('reviews', `course_id=eq.${courseId}&order=created_at.desc&limit=20`);
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="review-empty">아직 후기가 없어요. 첫 번째로 남겨주세요!</div>';
+      return;
+    }
+    list.innerHTML = data.map(r => {
+      const date = new Date(r.created_at).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+      return `<div class="review-item">
+        <div class="review-item-text">${r.text}</div>
+        <div class="review-item-meta">${date}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="review-empty">후기를 불러오지 못했어요</div>';
+  }
+}
+async function submitReview(courseId) {
+  const input = document.getElementById('reviewInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  try {
+    await sb.insert('reviews', { course_id: courseId, text });
+    renderReviews(courseId);
+    checkBadges();
+    showToast('후기가 등록됐어요 👍');
+  } catch(e) {
+    showToast('등록 실패. 다시 시도해주세요');
+  }
+}
+
+// ── 뱃지 정의 ──
+const BADGES = [
+  { id: 'first_run',   icon: '🏃', name: '첫 발걸음',   cond: '기록 1개',       check: (r,s) => r >= 1 },
+  { id: 'five_runs',   icon: '🔥', name: '꾸준한 러너', cond: '기록 5개',       check: (r,s) => r >= 5 },
+  { id: 'ten_runs',    icon: '💎', name: '러닝 중독자', cond: '기록 10개',      check: (r,s) => r >= 10 },
+  { id: 'saver',       icon: '❤️', name: '코스 수집가', cond: '저장 3개',       check: (r,s) => s >= 3 },
+  { id: 'explorer',    icon: '🗺️', name: '탐험가',      cond: '저장 5개',       check: (r,s) => s >= 5 },
+  { id: 'reviewer',    icon: '✍️', name: '후기왕',      cond: '후기 3개',       check: (r,s,rv) => rv >= 3 },
+  { id: 'night_owl',   icon: '🌙', name: '야간 러너',   cond: 'night 코스 기록', check: (r,s,rv,types) => types.includes('night') },
+  { id: 'mountain',    icon: '⛰️', name: '업힐 정복자', cond: 'workout 코스 기록', check: (r,s,rv,types) => types.includes('workout') },
+];
+function getBadgeStats() {
+  const recordCount = records.length;
+  const savedCount = savedCourses.length;
+  let reviewCount = 0;
+  COURSES.forEach(c => { reviewCount += getReviews(c.id).length; });
+  const runTypes = records.map(r => {
+    const c = COURSES.find(x => x.id === r.courseId);
+    return c ? c.type : '';
+  });
+  return { recordCount, savedCount, reviewCount, runTypes };
+}
+function checkBadges() {
+  const { recordCount, savedCount, reviewCount, runTypes } = getBadgeStats();
+  const earned = JSON.parse(localStorage.getItem('rm_badges') || '[]');
+  let newBadge = false;
+  BADGES.forEach(b => {
+    if (!earned.includes(b.id) && b.check(recordCount, savedCount, reviewCount, runTypes)) {
+      earned.push(b.id);
+      newBadge = true;
+      showToast('🏅 새 뱃지 획득! ' + b.name);
+    }
+  });
+  if (newBadge) localStorage.setItem('rm_badges', JSON.stringify(earned));
+  return earned;
+}
+function renderBadgeTab(body, notice) {
+  const earned = checkBadges();
+  const { recordCount, savedCount, reviewCount } = getBadgeStats();
+  body.innerHTML = notice + `
+    <div class="badge-summary">
+      <div class="badge-summary-stat">
+        <div class="badge-summary-num">${recordCount}</div>
+        <div class="badge-summary-label">총 기록</div>
+      </div>
+      <div class="badge-summary-stat">
+        <div class="badge-summary-num">${savedCount}</div>
+        <div class="badge-summary-label">저장</div>
+      </div>
+      <div class="badge-summary-stat">
+        <div class="badge-summary-num">${earned.length}</div>
+        <div class="badge-summary-label">획득 뱃지</div>
+      </div>
+    </div>
+    <div class="mypage-section-title">내 뱃지 (${earned.length}/${BADGES.length})</div>
+    <div class="badge-grid">
+      ${BADGES.map(b => {
+        const isEarned = earned.includes(b.id);
+        return `<div class="badge-item ${isEarned ? 'earned' : 'locked'}">
+          <div class="badge-icon">${b.icon}</div>
+          <div class="badge-name">${b.name}</div>
+          <div class="badge-cond">${b.cond}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ── 제보 모달 ──
+let selectedReportType = '';
+function openReportModal() {
+  document.getElementById('reportOverlay').classList.add('open');
+}
+function closeReportModal() {
+  document.getElementById('reportOverlay').classList.remove('open');
+}
+function closeReportOnBg(e) {
+  if (e.target === document.getElementById('reportOverlay')) closeReportModal();
+}
+function selectReportType(btn, type) {
+  document.querySelectorAll('.report-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedReportType = type;
+}
+async function submitReport() {
+  const name = document.getElementById('rName').value.trim();
+  const region = document.getElementById('rRegion').value.trim();
+  const address = document.getElementById('rAddress').value.trim();
+  const km = parseFloat(document.getElementById('rKm').value);
+  const description = document.getElementById('rDesc').value.trim();
+  const extra = document.getElementById('rExtra').value.trim();
+
+  if (!name || !region || !address || !km || !selectedReportType || !description) {
+    showToast('* 표시 항목을 모두 입력해주세요!'); return;
+  }
+
+  const btn = document.querySelector('.report-google-btn');
+  btn.textContent = '등록 중...';
+  btn.disabled = true;
+
+  try {
+    await sb.insert('reports', {
+      name, region, address, km,
+      type: selectedReportType,
+      description, extra, status: 'pending'
+    });
+
+    // 폼 초기화
+    ['rName','rRegion','rAddress','rKm','rDesc','rExtra'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.querySelectorAll('.report-type-btn').forEach(b => b.classList.remove('selected'));
+    selectedReportType = '';
+    closeReportModal();
+    showToast('제보 감사해요! 검토 후 지도에 추가할게요 🙏');
+  } catch(e) {
+    showToast('제보 실패. 다시 시도해주세요');
+  } finally {
+    btn.textContent = '📍 제보 등록하기';
+    btn.disabled = false;
+  }
+}
+
+// ── switchMyTab 업데이트 (badge 탭 포함) ──
+function switchMyTab(tab) {
+  myTab = tab;
+  ['saved','recent','records','badge','reports'].forEach(t => {
+    const el = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (el) el.classList.toggle('active', t === tab);
+  });
+  renderMyPage();
+}
+
+// ── 검색 + 정렬 ──
+let sortByLocation = false;
+let myLat = null, myLng = null;
+
+function toggleSort() {
+  sortByLocation = !sortByLocation;
+  document.getElementById('sortBtn').classList.toggle('active', sortByLocation);
+  if (sortByLocation && !myLat) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      myLat = pos.coords.latitude;
+      myLng = pos.coords.longitude;
+      renderList();
+      fetchWeather(myLat, myLng);
+    }, () => { sortByLocation = false; document.getElementById('sortBtn').classList.remove('active'); showToast('위치 권한이 필요해요'); });
+  } else {
+    renderList();
+  }
+}
+
+function calcDist(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ── 날씨 ──
+async function fetchWeather(lat, lng) {
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&timezone=Asia%2FSeoul`);
+    const data = await res.json();
+    const w = data.current_weather;
+    const code = w.weathercode;
+    const temp = Math.round(w.temperature);
+    const icon = code <= 1 ? '☀️' : code <= 3 ? '⛅' : code <= 67 ? '🌧️' : code <= 77 ? '🌨️' : '🌩️';
+    const msg = code <= 1 ? '러닝하기 딱 좋은 날씨!' : code <= 3 ? '흐리지만 뛸 만해요' : '우비 챙기세요 🌧️';
+    document.getElementById('weatherChip').innerHTML = `${icon} ${temp}°C · ${msg}`;
+  } catch(e) {}
+}
+
+// ── 공유 ──
+function shareCurrentCourse() {
+  const c = COURSES.find(x => x.id === currentCourseId);
+  if (!c) return;
+  const url = `${location.origin}${location.pathname}?course=${c.id}`;
+  const text = `[러너맵] ${c.name} · ${c.km}km\n${c.desc}\n${url}`;
+  if (navigator.share) {
+    navigator.share({ title: c.name, text: c.desc, url });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('링크가 복사됐어요! 카카오톡에 붙여넣어 공유해보세요 🔗'));
+  } else {
+    showToast('공유: ' + url);
+  }
+}
+
+// ── URL 파라미터로 코스 자동 오픈 ──
+function checkUrlCourse() {
+  const params = new URLSearchParams(location.search);
+  const id = parseInt(params.get('course'));
+  if (!isNaN(id) && COURSES.find(x => x.id === id)) {
+    setTimeout(() => openDetail(id), 800);
   }
 }
 
