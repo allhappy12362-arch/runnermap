@@ -38,10 +38,15 @@
       <div class="map-overlay-btn" onclick="moveToMyLocation()">⊕</div>
     </div>
     <button class="fab-report" onclick="openReportModal()" title="코스 제보하기">+</button>
+    <button class="fab-ranking" onclick="togglePanel()" title="추천 코스 목록">🏆</button>
   </div>
 
   <!-- RIGHT PANEL -->
-  <div class="right-panel">
+  <div class="right-panel" id="rightPanel">
+    <div class="panel-handle" onclick="togglePanel()">
+      <span class="panel-handle-title">🏆 추천 코스 <span id="courseCount">-</span>개</span>
+      <button class="panel-toggle-btn" id="panelToggleBtn">▼</button>
+    </div>
     <div class="search-bar-wrap">
       <input class="search-input" type="text" id="searchInput" placeholder="🔍 코스 이름 또는 지역 검색" oninput="renderList()">
       <button class="sort-btn" id="sortBtn" onclick="toggleSort()" title="내 위치 기준 정렬">📍</button>
@@ -55,10 +60,6 @@
       <div class="filter-chip" data-filter="short" onclick="setFilter(this,'short')">🚀 짧고 가벼운</div>
     </div>
     <div class="list-area">
-      <div class="list-header">
-        <div>내 주변 코스 <span id="courseCount">-</span>개</div>
-        <div class="weather-chip" id="weatherChip"></div>
-      </div>
       <div class="course-list" id="courseList">
         <div class="loading">코스 불러오는 중...</div>
       </div>

@@ -61,56 +61,50 @@ function renderMapMarkers() {
   courseMarkers.forEach(m => m.setMap(null));
   courseMarkers = [];
 
-  const colorMap = { scenic: '#4d9fff', quiet: '#9d7fff', night: '#ff9d3d', workout: '#ff4d4d' };
   const filtered = getFilteredCourses();
 
   filtered.forEach(c => {
-    const color = colorMap[c.type] || '#888';
     const isSelected = currentCourseId === c.id;
-    const size = isSelected ? 28 : 22;
-    const r = size;
-    // 육각형 꼭짓점 계산 (flat-top)
-    const hex = (s) => {
-      const pts = [];
-      for (let i = 0; i < 6; i++) {
-        const a = Math.PI / 180 * (60 * i - 30);
-        pts.push(`${s*Math.cos(a)},${s*Math.sin(a)}`);
-      }
-      return pts.join(' ');
-    };
-    const s = size;
-    const tailY = s + 10;
-    const dotY = tailY + 2;
-    // 사람 비율 (핀 크기에 비례)
-    const headR = s * 0.22;
-    const headCY = -s * 0.44;
-    const bodyT = headCY + headR;
-    const bodyB = s * 0.27;
-    const armY = bodyT + (bodyB - bodyT) * 0.35;
-    const legSplit = bodyB;
-    const legLen = s * 0.42;
-    const armSpread = s * 0.35;
+    const color = '#ff2020';
+    const size = isSelected ? 32 : 24;
+    const glow = isSelected ? `<circle cx="0" cy="0" r="${size+6}" fill="rgba(255,32,32,0.22)"/>` : '';
 
-    const svgPin = `<svg xmlns="http://www.w3.org/2000/svg" width="${s*2+8}" height="${s*2+dotY+6}" viewBox="${-s-4} ${-s-4} ${s*2+8} ${s*2+dotY+6}" style="overflow:visible;display:block">
-      ${isSelected ? `<polygon points="${hex(s+5)}" fill="${color}" opacity="0.18"/>` : ''}
-      <polygon points="${hex(s)}" fill="${color}" opacity="${isSelected?0.22:0.12}"/>
-      <polygon points="${hex(s)}" fill="none" stroke="${color}" stroke-width="${isSelected?2:1.5}"/>
-      ${isSelected ? `<polygon points="${hex(s)}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="3 3" transform="scale(1.25)" opacity="0.6"/>` : ''}
-      <circle cx="0" cy="${headCY}" r="${headR}" fill="${color}"/>
-      <line x1="0" y1="${bodyT}" x2="0" y2="${bodyB}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
-      <line x1="${-armSpread}" y1="${armY+s*0.08}" x2="0" y2="${armY-s*0.06}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="0" y1="${armY-s*0.06}" x2="${armSpread}" y2="${armY+s*0.1}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="0" y1="${legSplit}" x2="${-legLen*0.55}" y2="${legSplit+legLen}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="0" y1="${legSplit}" x2="${legLen*0.62}" y2="${legSplit+legLen*0.88}" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>
-      <line x1="0" y1="${s}" x2="0" y2="${tailY}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="0" cy="${dotY}" r="2" fill="${color}"/>
+    // 달리는 사람 SVG (핀 형태, 빨간색)
+    const svgPin = `<svg xmlns="http://www.w3.org/2000/svg" 
+      width="${size*2+12}" height="${size*2+16}" 
+      viewBox="${-size-6} ${-size-6} ${size*2+12} ${size*2+16}"
+      style="overflow:visible;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">
+      ${glow}
+      <!-- 핀 몸통 -->
+      <circle cx="0" cy="0" r="${size}" fill="${color}" opacity="0.92"/>
+      <circle cx="0" cy="0" r="${size}" fill="none" stroke="white" stroke-width="${isSelected?2:1.5}" opacity="0.6"/>
+      <!-- 핀 꼬리 -->
+      <polygon points="0,${size} ${-size*0.35},${size*1.5} ${size*0.35},${size*1.5}" fill="${color}" opacity="0.92"/>
+      <!-- 달리는 사람 (흰색) -->
+      <!-- 머리 -->
+      <circle cx="${size*0.15}" cy="${-size*0.52}" r="${size*0.18}" fill="white"/>
+      <!-- 몸통 -->
+      <line x1="${size*0.05}" y1="${-size*0.34}" x2="${-size*0.1}" y2="${size*0.12}" 
+        stroke="white" stroke-width="${size*0.12}" stroke-linecap="round"/>
+      <!-- 팔 (앞) -->
+      <line x1="${size*0.05}" y1="${-size*0.18}" x2="${size*0.38}" y2="${-size*0.38}" 
+        stroke="white" stroke-width="${size*0.1}" stroke-linecap="round"/>
+      <!-- 팔 (뒤) -->
+      <line x1="${size*0.0}" y1="${-size*0.2}" x2="${-size*0.32}" y2="${-size*0.05}" 
+        stroke="white" stroke-width="${size*0.1}" stroke-linecap="round"/>
+      <!-- 다리 (앞) -->
+      <line x1="${-size*0.1}" y1="${size*0.12}" x2="${size*0.28}" y2="${size*0.42}" 
+        stroke="white" stroke-width="${size*0.11}" stroke-linecap="round"/>
+      <!-- 다리 (뒤) -->
+      <line x1="${-size*0.1}" y1="${size*0.12}" x2="${-size*0.35}" y2="${size*0.38}" 
+        stroke="white" stroke-width="${size*0.11}" stroke-linecap="round"/>
     </svg>`;
 
     const content = `<div style="cursor:pointer;display:flex;justify-content:center" onclick="handlePinClick(${c.id})">${svgPin}</div>`;
     const overlay = new kakao.maps.CustomOverlay({
       position: new kakao.maps.LatLng(c.lat, c.lng),
       content,
-      yAnchor: 1
+      yAnchor: 1.3
     });
     overlay.setMap(kakaoMap);
     courseMarkers.push(overlay);
@@ -353,6 +347,67 @@ async function uploadCourseImage(event) {
   event.target.value = '';
 }
 
+// 동기부여 명언
+const MOTIVATION_QUOTES = [
+  ["뛰는 것은 단순히 몸을 움직이는 게 아니라, 자신을 발견하는 여정이다.", "하이데 로제"],
+  ["불가능이란 아무것도 하지 않는 사람이 만들어낸 핑계다.", "무하마드 알리"],
+  ["매일 조금씩, 하지만 절대 멈추지 않는다.", "마우리시오 왈쉬"],
+  ["고통은 일시적이다. 포기는 영원하다.", "랜스 암스트롱"],
+  ["당신이 달릴 수 있을 때 달려라. 달릴 수 없을 때도 뛰어라. 절대 멈추지 마라.", "딘 카르나지스"],
+  ["매 걸음마다 당신은 더 강해진다.", "에밀 자토펙"],
+  ["오늘 힘들었던 만큼 내일은 더 빨라진다.", "스티브 프리폰테인"],
+  ["한계는 마음속에만 있다. 몸은 마음이 믿는 것까지만 간다.", "로저 배니스터"],
+  ["챔피언은 훈련하고, 고통을 참고, 원하는 동안 만들어진다.", "무하마드 알리"],
+  ["달리기는 자유다. 내 두 발이 닿는 곳 어디든 내 세상이 된다.", "윌마 루돌프"],
+  ["출발선에 서는 것이 이미 절반의 승리다.", "마이클 조던"],
+  ["가장 빠른 길은 꾸준히 가는 것이다.", "찰스 다윈"],
+  ["당신의 잠재력은 당신이 포기하는 순간 결정된다.", "마이클 조던"],
+  ["시작하는 것이 성공의 절반이다.", "플라톤"],
+  ["오늘의 땀이 내일의 나를 만든다.", "칼 루이스"],
+  ["두려움을 느끼면서도 달리는 것, 그것이 진정한 용기다.", "빌 로저스"],
+  ["끝은 또 다른 시작이다.", "T.S. 엘리엇"],
+  ["꿈은 달리는 발 아래서 현실이 된다.", "캐서린 스위처"],
+  ["포기하고 싶을 때가 바로 성장하는 순간이다.", "에밀리 케스텐바움"],
+  ["내가 멈추지 않는 한, 속도는 중요하지 않다.", "공자"],
+];
+function getMotivationQuote(courseId) {
+  return MOTIVATION_QUOTES[courseId % MOTIVATION_QUOTES.length];
+}
+
+// 패널 토글
+function togglePanel() {
+  const panel = document.getElementById('rightPanel');
+  panel.classList.toggle('open');
+}
+
+const QUOTES = [
+  { text: "고통은 일시적이다. 포기는 영원하다.", author: "Lance Armstrong" },
+  { text: "당신이 달리지 않으면, 당신은 이길 수 없다.", author: "Jesse Owens" },
+  { text: "몸이 할 수 없다고 말할 때, 마음에게 물어라.", author: "Unknown" },
+  { text: "출발선에 서는 것만으로도 절반은 이긴 것이다.", author: "Unknown" },
+  { text: "매일 조금씩 더. 그것이 전부다.", author: "Emil Zátopek" },
+  { text: "달리는 것은 인생을 이야기하는 가장 직접적인 방법이다.", author: "Bernd Heinrich" },
+  { text: "느리게 달려도 괜찮다. 소파에 앉은 사람보다는 빠르다.", author: "Unknown" },
+  { text: "한계는 네가 만든 것이다.", author: "Michael Jordan" },
+  { text: "불가능은 사실이 아니라 의견이다.", author: "Muhammad Ali" },
+  { text: "러닝은 자유다. 아무도 그걸 빼앗을 수 없다.", author: "Grete Waitz" },
+  { text: "땀은 결코 거짓말하지 않는다.", author: "Unknown" },
+  { text: "오늘의 고통이 내일의 강함이 된다.", author: "Arnold Schwarzenegger" },
+  { text: "포기하고 싶을 때가 바로 돌파구가 열리는 순간이다.", author: "Unknown" },
+  { text: "기록은 깨지기 위해 존재한다.", author: "Jesse Owens" },
+  { text: "두려움을 달리기로 날려버려라.", author: "Kathrine Switzer" },
+  { text: "마라톤은 절반이 체력, 절반이 정신력이다.", author: "Unknown" },
+  { text: "당신의 다리가 포기해도 당신의 마음은 계속 달린다.", author: "Unknown" },
+  { text: "러닝화 끈을 묶는 그 순간, 당신은 이미 달리고 있다.", author: "Unknown" },
+  { text: "멀리 보지 마라. 다음 한 걸음만 생각하라.", author: "Unknown" },
+  { text: "달리기를 시작하기에 너무 늦은 때란 없다.", author: "John Bingham" },
+];
+
+function getMotivationalQuote(courseId) {
+  const q = QUOTES[courseId % QUOTES.length];
+  return `<div class="quote-text">"${q.text}"</div><div class="quote-author">— ${q.author}</div>`;
+}
+
 loadCourses();
 
 function saveState() {
@@ -576,6 +631,7 @@ function openDetail(id) {
     <div class="detail-section">
       <div class="detail-section-title">한줄 총평</div>
       <div class="total-review">"${c.review}"</div>
+      <div class="quote-block">${getMotivationalQuote(c.id)}</div>
     </div>`;
 
   const btn = document.getElementById('detailSaveBtn');
