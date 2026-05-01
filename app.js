@@ -47,7 +47,7 @@ function initKakaoMap() {
       const lng = pos.coords.longitude;
       const myPos = new kakao.maps.LatLng(lat, lng);
       kakaoMap.setCenter(myPos);
-      const myContent = `<div style="width:14px;height:14px;border-radius:50%;background:#c8ff00;border:2px solid #fff;box-shadow:0 0 0 6px rgba(200,255,0,0.25)"></div>`;
+      const myContent = `<div style="width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,0.6);box-shadow:0 0 0 4px rgba(255,255,255,0.15)"></div>`;
       const myOverlay = new kakao.maps.CustomOverlay({ position: myPos, content: myContent });
       myOverlay.setMap(kakaoMap);
     }, () => {});
@@ -267,7 +267,7 @@ async function loadCourses() {
       mapLevel: c.map_level
     }));
 
-    document.getElementById('courseCount').textContent = COURSES.length;
+    document.getElementById('courseCount').textContent = COURSES.length; const cc2=document.getElementById('courseCount2'); if(cc2) cc2.textContent=COURSES.length;
     renderList();
     loadKakaoMap();
     setTimeout(() => renderMapMarkers(), 1500);
@@ -279,7 +279,7 @@ async function loadCourses() {
       const res = await fetch('courses.json');
       const data = await res.json();
       COURSES = data;
-      document.getElementById('courseCount').textContent = COURSES.length;
+      document.getElementById('courseCount').textContent = COURSES.length; const cc2=document.getElementById('courseCount2'); if(cc2) cc2.textContent=COURSES.length;
       renderList();
       loadKakaoMap();
       setTimeout(() => renderMapMarkers(), 1500);
@@ -479,7 +479,7 @@ function setFilter(el, filter) {
 // ── 리스트 렌더 ──
 function renderList() {
   const filtered = getFilteredCourses();
-  document.getElementById('courseCount').textContent = filtered.length;
+  document.getElementById('courseCount').textContent = filtered.length; const cc2b=document.getElementById('courseCount2'); if(cc2b) cc2b.textContent=filtered.length;
   document.getElementById('courseList').innerHTML = filtered.map(cardHTML).join('');
 }
 

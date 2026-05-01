@@ -530,29 +530,34 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   100% { transform: translateX(-50%); }
 }
 
-/* FAB 제보 버튼 */
+/* FAB 제보 버튼 — 오른쪽 상단 탭 */
 .fab-report {
-  position: absolute; bottom: 18px; left: 14px; z-index: 40;
-  width: 48px; height: 48px; border-radius: 50%;
-  background: var(--accent); border: none; color: #0d0d0d;
-  font-size: 26px; font-weight: 400; line-height: 1;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.4); transition: transform 0.15s;
+  position: absolute; top: 40px; right: 12px; z-index: 40;
+  height: 36px; padding: 0 14px;
+  border-radius: 20px;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  color: var(--text); font-size: 12px; font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35); transition: all 0.15s;
+  white-space: nowrap;
 }
-.fab-report:hover { transform: scale(1.08); }
-.fab-report:active { transform: scale(0.95); }
+.fab-report:hover { background: var(--bg3); }
+.fab-report:active { transform: scale(0.96); }
 
-/* FAB 랭킹 버튼 */
+/* FAB 랭킹 버튼 — 하단 가운데 */
 .fab-ranking {
-  position: absolute; bottom: 18px; right: 14px; z-index: 40;
-  width: 48px; height: 48px; border-radius: 50%;
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 40;
+  height: 42px; padding: 0 22px;
+  border-radius: 24px;
   background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
-  font-size: 20px; line-height: 1;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3); transition: transform 0.15s;
+  font-size: 13px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.4); transition: all 0.15s;
+  white-space: nowrap;
 }
-.fab-ranking:hover { transform: scale(1.08); }
-.fab-ranking:active { transform: scale(0.95); }
+.fab-ranking:hover { background: var(--bg3); }
+.fab-ranking:active { transform: translateX(-50%) scale(0.96); }
 
 /* 후기 섹션 */
 .review-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
