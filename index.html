@@ -26,6 +26,10 @@
 <div class="layout">
   <!-- MAP -->
   <div class="map-area" id="mapArea">
+    <!-- 전광판 티커 -->
+    <div class="ticker-wrap">
+      <div class="ticker-track" id="tickerTrack"></div>
+    </div>
     <div id="kakaoMap"></div>
     <div class="route-info-overlay" id="routeInfoOverlay">
       <div>
@@ -37,8 +41,8 @@
     <div class="map-overlay">
       <div class="map-overlay-btn" onclick="moveToMyLocation()">⊕</div>
     </div>
-    <button class="fab-report" onclick="openReportModal()" title="코스 제보하기">+</button>
     <button class="fab-ranking" onclick="togglePanel()" title="추천 코스 목록">🏆</button>
+    <button class="fab-report" onclick="openReportModal()" title="코스 제보하기">+</button>
   </div>
 
   <!-- RIGHT PANEL -->

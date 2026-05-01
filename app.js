@@ -408,7 +408,32 @@ function getMotivationalQuote(courseId) {
   return `<div class="quote-text">"${q.text}"</div><div class="quote-author">— ${q.author}</div>`;
 }
 
+// ── 전광판 티커 ──
+const TICKER_MSGS = [
+  "🏃 오늘 달리지 않으면 내일도 핑계가 생긴다",
+  "💨 느려도 괜찮다 — 멈추지만 않으면 된다",
+  "🔥 땀은 지방이 우는 소리다",
+  "⚡ 지금 이 순간도 누군가는 달리고 있다",
+  "🎯 목표를 향해 한 걸음씩 — 러너맵이 함께한다",
+  "🌅 이른 아침 달리기는 하루를 두 배로 만든다",
+  "💪 어제보다 1분 더 — 그게 성장이다",
+  "🏅 완주의 기쁨은 출발한 사람만 안다",
+  "🌙 야간 러닝은 도시를 나만의 것으로 만드는 시간",
+  "🗺️ 새로운 코스, 새로운 나 — 오늘 어디서 달릴까?",
+];
+
+function initTicker() {
+  const track = document.getElementById('tickerTrack');
+  if (!track) return;
+  // 두 번 반복해서 seamless loop
+  const msgs = [...TICKER_MSGS, ...TICKER_MSGS];
+  track.innerHTML = msgs.map(m =>
+    `<span class="ticker-item">${m}</span><span class="ticker-dot">●</span>`
+  ).join('');
+}
+
 loadCourses();
+initTicker();
 
 function saveState() {
   localStorage.setItem('rm_saved', JSON.stringify(savedCourses));
@@ -543,11 +568,15 @@ function openDetail(id) {
     </div>`).join('');
 
   const facItems = [
-    [c.facilities.toilet,'🚻 화장실'],
-    [c.facilities.water, '💧 음수대'],
-    [c.facilities.store, '🏪 편의점'],
-    [c.facilities.spot,  '🧍 집결공간'],
-  ].map(([v,label]) => `<div class="facility-item ${v?'yes':'no'}">${label} ${v?'있음':'없음'}</div>`).join('');
+    [c.facilities.toilet, '🚻 화장실', c.facilities.toilet ? '코스 내 공중화장실 있음 — 급할 때 걱정 없어요' : '화장실 없음 — 출발 전 미리 해결하세요'],
+    [c.facilities.water,  '💧 음수대', c.facilities.water  ? '음수대 있음 — 물 없이 가도 됩니다'              : '음수대 없음 — 물 챙겨가세요 (500ml 이상)'],
+    [c.facilities.store,  '🏪 편의점', c.facilities.store  ? '편의점 근처 있음 — 러닝 후 보충 가능'           : '편의점 없음 — 에너지젤·간식 미리 챙기세요'],
+    [c.facilities.spot,   '🧍 집결공간', c.facilities.spot ? '집결 공간 있음 — 크루런·모임 달리기 최적'       : '별도 집결 공간 없음 — 만남 장소 사전 지정 필요'],
+  ].map(([v, label, desc]) => `
+    <div class="facility-item ${v ? 'yes' : 'no'}">
+      <div class="facility-label">${label} ${v ? '있음' : '없음'}</div>
+      <div class="facility-desc">${desc}</div>
+    </div>`).join('');
 
   document.getElementById('detailBody').innerHTML = `
     <div class="detail-title">${c.name}</div>
@@ -575,24 +604,38 @@ function openDetail(id) {
     </div>
 
     <div class="pace-calc">
-      <div class="pace-calc-title">⏱ 페이스 계산기 — 내가 뛰면 얼마나 걸릴까?</div>
-      <div class="pace-row">
-        <span class="pace-label">페이스</span>
-        <input class="pace-input" type="number" id="paceMin" value="6" min="3" max="15" style="max-width:52px" oninput="calcPace(${c.km})">
+      <div class="pace-calc-title">⏱ 내가 뛰면 얼마나 걸릴까?</div>
+      <div class="pace-level-row">
+        <button class="pace-level-btn active" onclick="setPaceLevel(this,7,0,${c.km})" data-label="🚶 초보">🚶 초보<span>7분/km</span></button>
+        <button class="pace-level-btn" onclick="setPaceLevel(this,6,0,${c.km})" data-label="🏃 보통">🏃 보통<span>6분/km</span></button>
+        <button class="pace-level-btn" onclick="setPaceLevel(this,5,0,${c.km})" data-label="💨 빠름">💨 빠름<span>5분/km</span></button>
+        <button class="pace-level-btn" onclick="setPaceLevel(this,4,0,${c.km})" data-label="🔥 고수">🔥 고수<span>4분/km</span></button>
+      </div>
+      <div class="pace-custom-row">
+        <span class="pace-label">직접 입력</span>
+        <input class="pace-input" type="number" id="paceMin" value="7" min="3" max="15" style="max-width:48px" oninput="calcPace(${c.km})">
         <span class="pace-sep">분</span>
-        <input class="pace-input" type="number" id="paceSec" value="0" min="0" max="59" style="max-width:52px" oninput="calcPace(${c.km})">
-        <span class="pace-sep">초 / km</span>
+        <input class="pace-input" type="number" id="paceSec" value="0" min="0" max="59" style="max-width:48px" oninput="calcPace(${c.km})">
+        <span class="pace-sep">초/km</span>
       </div>
-      <div class="pace-result">
-        <div>
-          <div class="pace-result-time" id="paceResultTime">45분 00초</div>
-          <div class="pace-result-label">예상 완주 시간</div>
+      <div class="pace-result-cards">
+        <div class="pace-card main">
+          <div class="pace-card-icon">⏰</div>
+          <div class="pace-card-value" id="paceResultTime">49분 00초</div>
+          <div class="pace-card-label">완주 시간</div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:12px;color:var(--text2)" id="paceResultKcal"></div>
-          <div style="font-size:11px;color:var(--text3)">예상 소모 칼로리 (70kg 기준)</div>
+        <div class="pace-card">
+          <div class="pace-card-icon">🔥</div>
+          <div class="pace-card-value" id="paceResultKcal">—</div>
+          <div class="pace-card-label">소모 칼로리</div>
+        </div>
+        <div class="pace-card">
+          <div class="pace-card-icon">🍔</div>
+          <div class="pace-card-value" id="paceResultFood">—</div>
+          <div class="pace-card-label">햄버거 몇 개</div>
         </div>
       </div>
+      <div class="pace-tip" id="paceTip"></div>
     </div>
 
     <div class="detail-section">
@@ -609,7 +652,10 @@ function openDetail(id) {
     <div class="detail-section">
       <div class="detail-section-title">편의시설</div>
       <div class="facility-grid">${facItems}
-        <div class="facility-item yes" style="grid-column:1/-1">🚦 ${c.facilities.signal}</div>
+        <div class="facility-item yes" style="grid-column:1/-1">
+          <div class="facility-label">🚦 신호등 현황</div>
+          <div class="facility-desc">${c.facilities.signal === '신호등 없음' ? '신호등 없음 — 끊기지 않고 페이스 유지 가능해요' : c.facilities.signal === '신호등 일부 있음' || c.facilities.signal === '신호등 일부' ? '신호등 일부 있음 — 구간에 따라 멈춤 발생, 인터벌 훈련 활용 가능' : '신호등 있음 — 페이스 훈련보다 가볍게 즐기는 코스에 적합'}</div>
+        </div>
       </div>
     </div>
     <div class="detail-section">
@@ -648,21 +694,43 @@ function openDetail(id) {
 }
 
 // ── 페이스 계산기 ──
+function setPaceLevel(btn, min, sec, km) {
+  document.querySelectorAll('.pace-level-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('paceMin').value = min;
+  document.getElementById('paceSec').value = sec;
+  calcPace(km);
+}
+
 function calcPace(km) {
   const minEl = document.getElementById('paceMin');
   const secEl = document.getElementById('paceSec');
   if (!minEl || !secEl) return;
-  const totalSec = (parseInt(minEl.value)||6) * 60 + (parseInt(secEl.value)||0);
-  const totalRunSec = Math.round(totalSec * km);
-  const h = Math.floor(totalRunSec / 3600);
-  const m = Math.floor((totalRunSec % 3600) / 60);
-  const s = totalRunSec % 60;
+  const pacePerKm = (parseInt(minEl.value)||6) * 60 + (parseInt(secEl.value)||0);
+  const totalSec = Math.round(pacePerKm * km);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
   const timeStr = h > 0
-    ? `${h}시간 ${m}분 ${s.toString().padStart(2,'0')}초`
+    ? `${h}시간 ${m}분`
     : `${m}분 ${s.toString().padStart(2,'0')}초`;
-  const kcal = Math.round(km * 70 * 1.05); // 70kg 기준 약 1.05kcal/kg/km
+  const kcal = Math.round(km * 70 * 1.05);
+  const burgers = (kcal / 550).toFixed(1);
+
   document.getElementById('paceResultTime').textContent = timeStr;
-  document.getElementById('paceResultKcal').textContent = `약 ${kcal} kcal`;
+  document.getElementById('paceResultKcal').textContent = `${kcal} kcal`;
+  document.getElementById('paceResultFood').textContent = `${burgers}개`;
+
+  // 팁 메시지
+  const paceMin = parseInt(minEl.value)||6;
+  let tip = '';
+  if (paceMin >= 8) tip = '💡 걷기보다 조금 빠른 페이스예요. 숨 편하게 대화 가능!';
+  else if (paceMin === 7) tip = '💡 입문자 적정 페이스. 옆 사람과 짧은 대화 가능한 강도예요.';
+  else if (paceMin === 6) tip = '💡 일반 러너 평균 페이스. 5km 대회 참가자 평균이에요.';
+  else if (paceMin === 5) tip = '💡 10km 대회 입상권 수준. 꽤 빠른 페이스예요!';
+  else if (paceMin <= 4) tip = '🔥 엘리트 수준! 하프마라톤 1시간 25분 페이스예요.';
+  const tipEl = document.getElementById('paceTip');
+  if (tipEl) tipEl.textContent = tip;
 }
 
 function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); }
@@ -890,14 +958,22 @@ function renderBadgeTab(body, notice) {
         <div class="badge-summary-label">획득 뱃지</div>
       </div>
     </div>
+    <div class="badge-how-to">
+      <div class="badge-how-title">🏅 뱃지는 이렇게 얻어요</div>
+      <div class="badge-how-list">
+        <div class="badge-how-item">📝 <b>기록 남기기</b> — 코스 상세 → "기록 남기기" 버튼</div>
+        <div class="badge-how-item">❤️ <b>코스 저장</b> — 코스 상세 → "저장하기" 버튼</div>
+        <div class="badge-how-item">✍️ <b>한줄 후기</b> — 코스 상세 → 후기 입력란</div>
+      </div>
+    </div>
     <div class="mypage-section-title">내 뱃지 (${earned.length}/${BADGES.length})</div>
     <div class="badge-grid">
       ${BADGES.map(b => {
         const isEarned = earned.includes(b.id);
         return `<div class="badge-item ${isEarned ? 'earned' : 'locked'}">
-          <div class="badge-icon">${b.icon}</div>
+          <div class="badge-icon">${isEarned ? b.icon : '🔒'}</div>
           <div class="badge-name">${b.name}</div>
-          <div class="badge-cond">${b.cond}</div>
+          <div class="badge-cond">${isEarned ? '✅ 획득 완료' : b.cond}</div>
         </div>`;
       }).join('')}
     </div>`;

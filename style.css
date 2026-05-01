@@ -244,12 +244,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 .facility-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .facility-item {
-  font-size: 13px; padding: 8px 12px; background: var(--bg3);
+  font-size: 13px; padding: 10px 12px; background: var(--bg3);
   border-radius: var(--radius-sm); border: 0.5px solid var(--border);
-  display: flex; align-items: center; gap: 6px;
+  display: flex; flex-direction: column; gap: 4px;
 }
 .facility-item.yes { border-color: rgba(200,255,0,0.15); }
-.facility-item.no { color: var(--text3); }
+.facility-item.no { opacity: 0.6; }
+.facility-label { font-size: 12px; font-weight: 600; color: var(--text); }
+.facility-item.no .facility-label { color: var(--text3); }
+.facility-desc { font-size: 11px; color: var(--text3); line-height: 1.4; }
 
 .fit-list { display: flex; flex-direction: column; gap: 6px; }
 .fit-item {
@@ -413,24 +416,40 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   background: var(--bg3); border: 0.5px solid var(--border2);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 22px;
 }
-.pace-calc-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; font-weight: 500; }
-.pace-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-.pace-input {
+.pace-calc-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+.pace-level-row { display: flex; gap: 6px; margin-bottom: 10px; }
+.pace-level-btn {
   flex: 1; background: var(--bg4); border: 0.5px solid var(--border2);
-  border-radius: var(--radius-sm); padding: 8px 10px;
+  border-radius: var(--radius-sm); padding: 8px 4px;
+  font-size: 11px; color: var(--text2); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: all 0.15s; line-height: 1.3; font-family: 'Noto Sans KR', sans-serif;
+}
+.pace-level-btn span { font-size: 10px; color: var(--text3); }
+.pace-level-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.pace-level-btn.active span { color: var(--accent); }
+.pace-custom-row { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; }
+.pace-input {
+  background: var(--bg4); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 6px 8px;
   font-size: 14px; color: var(--text); font-family: 'DM Mono', monospace;
   outline: none; text-align: center; transition: border-color 0.15s;
 }
 .pace-input:focus { border-color: var(--accent); }
-.pace-sep { color: var(--text3); font-size: 13px; }
-.pace-label { font-size: 12px; color: var(--text3); min-width: 50px; }
-.pace-result {
-  background: var(--accent-dim); border: 0.5px solid rgba(200,255,0,0.2);
-  border-radius: var(--radius-sm); padding: 10px 14px;
-  display: flex; justify-content: space-between; align-items: center;
+.pace-sep { color: var(--text3); font-size: 12px; }
+.pace-label { font-size: 11px; color: var(--text3); }
+.pace-result-cards { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.pace-card {
+  background: var(--bg4); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 10px 8px; text-align: center;
 }
-.pace-result-time { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--accent); }
-.pace-result-label { font-size: 11px; color: var(--text2); }
+.pace-card.main { background: var(--accent-dim); border-color: var(--accent); }
+.pace-card-icon { font-size: 16px; margin-bottom: 4px; }
+.pace-card-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); }
+.pace-card.main .pace-card-value { color: var(--accent); font-size: 16px; }
+.pace-card-label { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.pace-tip { font-size: 12px; color: var(--text2); background: var(--bg2); border-radius: var(--radius-sm); padding: 8px 10px; line-height: 1.5; }
+
 
 /* MAP ROUTE INFO OVERLAY */
 .route-info-overlay {
@@ -482,9 +501,38 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 }
 .detail-share-btn:hover { background: var(--bg3); color: var(--text); }
 
+/* 전광판 티커 */
+.ticker-wrap {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 35;
+  height: 32px; overflow: hidden;
+  background: linear-gradient(90deg, rgba(180,0,0,0.82), rgba(220,30,30,0.78));
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(255,80,80,0.3);
+  display: flex; align-items: center;
+}
+.ticker-track {
+  display: flex; align-items: center;
+  white-space: nowrap;
+  animation: tickerScroll 40s linear infinite;
+  will-change: transform;
+}
+.ticker-track:hover { animation-play-state: paused; }
+.ticker-item {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; color: rgba(255,255,255,0.92);
+  letter-spacing: 0.3px; padding: 0 40px;
+}
+.ticker-dot {
+  color: rgba(255,255,255,0.4); font-size: 10px; padding: 0 4px;
+}
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* FAB 제보 버튼 */
 .fab-report {
-  position: absolute; bottom: 18px; right: 14px; z-index: 40;
+  position: absolute; bottom: 18px; left: 14px; z-index: 40;
   width: 48px; height: 48px; border-radius: 50%;
   background: var(--accent); border: none; color: #0d0d0d;
   font-size: 26px; font-weight: 400; line-height: 1;
@@ -496,7 +544,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 /* FAB 랭킹 버튼 */
 .fab-ranking {
-  position: absolute; bottom: 76px; right: 14px; z-index: 40;
+  position: absolute; bottom: 18px; right: 14px; z-index: 40;
   width: 48px; height: 48px; border-radius: 50%;
   background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
   font-size: 20px; line-height: 1;
@@ -531,6 +579,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .review-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 16px 0; }
 
 /* 뱃지 시스템 */
+.badge-how-to {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
+}
+.badge-how-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+.badge-how-list { display: flex; flex-direction: column; gap: 6px; }
+.badge-how-item { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.badge-how-item b { color: var(--text); }
 .badge-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .badge-item {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
