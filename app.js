@@ -179,12 +179,57 @@ function clearRouteOverlay() {
   document.getElementById('routeInfoOverlay').classList.remove('visible');
 }
 
+let myLocationOverlay = null;
+
 function moveToMyLocation() {
   if (!kakaoMap) return;
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(pos => {
-      kakaoMap.setCenter(new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-    });
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const myPos = new kakao.maps.LatLng(lat, lng);
+      kakaoMap.setCenter(myPos);
+      kakaoMap.setLevel(4);
+
+      // 기존 내 위치 마커 제거
+      if (myLocationOverlay) myLocationOverlay.setMap(null);
+
+      // 큰 펄스 + 십자 마커
+      const content = `
+        <div style="position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <!-- 펄스 애니메이션 원 -->
+          <div style="position:absolute;width:60px;height:60px;border-radius:50%;
+            background:rgba(200,255,0,0.18);
+            animation:myLocPulse 1.6s ease-out infinite;"></div>
+          <div style="position:absolute;width:40px;height:40px;border-radius:50%;
+            background:rgba(200,255,0,0.28);
+            animation:myLocPulse 1.6s ease-out infinite 0.3s;"></div>
+          <!-- 중심 원 -->
+          <div style="position:relative;z-index:2;width:18px;height:18px;border-radius:50%;
+            background:#c8ff00;border:3px solid #0d0d0d;
+            box-shadow:0 0 0 3px rgba(200,255,0,0.5),0 2px 10px rgba(0,0,0,0.6);"></div>
+          <!-- 십자선 -->
+          <div style="position:absolute;top:50%;left:0;right:0;height:1.5px;
+            background:rgba(200,255,0,0.55);transform:translateY(-50%);z-index:1;"></div>
+          <div style="position:absolute;left:50%;top:0;bottom:0;width:1.5px;
+            background:rgba(200,255,0,0.55);transform:translateX(-50%);z-index:1;"></div>
+        </div>
+        <style>
+          @keyframes myLocPulse {
+            0%   { transform:scale(0.5); opacity:0.9; }
+            100% { transform:scale(1.6); opacity:0; }
+          }
+        </style>`;
+
+      myLocationOverlay = new kakao.maps.CustomOverlay({
+        position: myPos,
+        content,
+        zIndex: 10,
+        yAnchor: 0.5,
+        xAnchor: 0.5
+      });
+      myLocationOverlay.setMap(kakaoMap);
+    }, () => { showToast('위치 권한이 필요해요 🙏'); });
   }
 }
 // ── 데이터 로드 ──
