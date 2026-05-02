@@ -51,17 +51,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .map-placeholder-text { font-size: 13px; color: var(--text3); text-align: center; line-height: 1.6; }
 .map-placeholder-text a { color: var(--accent); text-decoration: none; }
 
-.map-overlay {
-  position: absolute; bottom: 70px; left: 12px;
-  display: flex; flex-direction: column; gap: 6px; z-index: 30;
-}
-.map-overlay-btn {
-  width: 36px; height: 36px; background: var(--bg2);
-  border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 16px; color: var(--text2); transition: all 0.15s;
-}
-.map-overlay-btn:hover { background: var(--bg4); color: var(--text); }
 
 /* RIGHT PANEL — 하단 서랍 (기본 접힘) */
 .right-panel {
