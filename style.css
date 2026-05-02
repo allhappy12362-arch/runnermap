@@ -533,7 +533,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 /* 우측 내 위치 버튼 */
 .fab-myloc {
-  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  position: absolute; right: 12px; bottom: 20px;
   z-index: 40;
   width: 46px; height: 46px; border-radius: 50%;
   background: var(--accent); border: none;
@@ -546,9 +546,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .fab-myloc:hover {
   background: #d4ff00;
   box-shadow: 0 0 0 7px rgba(200,255,0,0.3), 0 3px 20px rgba(0,0,0,0.55);
-  transform: translateY(-50%) scale(1.08);
+  transform: scale(1.08);
 }
-.fab-myloc:active { transform: translateY(-50%) scale(0.93); }
+.fab-myloc:active { transform: scale(0.93); }
 
 .fab-popular, .fab-report {
   height: 38px; padding: 0 16px; border-radius: 24px;
