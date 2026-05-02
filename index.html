@@ -38,35 +38,11 @@
       </div>
       <button class="route-info-close" onclick="clearRouteOverlay()">✕</button>
     </div>
-    <button class="fab-report" onclick="openReportModal()">📍 코스 제보하기</button>
-    <button class="fab-ranking" onclick="togglePanel()">🏆 코스 <span id="courseCount2"></span>개</button>
-  </div>
-
-  <!-- RIGHT PANEL -->
-  <div class="right-panel" id="rightPanel">
-    <div class="panel-handle" onclick="togglePanel()">
-      <span class="panel-handle-title">🏆 추천 코스 <span id="courseCount">-</span>개</span>
-      <button class="panel-toggle-btn" id="panelToggleBtn">▼</button>
-    </div>
-    <div class="search-bar-wrap">
-      <input class="search-input" type="text" id="searchInput" placeholder="🔍 코스 이름 또는 지역 검색" oninput="renderList()">
-      <button class="sort-btn" id="sortBtn" onclick="toggleSort()" title="내 위치 기준 정렬">📍</button>
-    </div>
-    <div class="filter-bar">
-      <div class="filter-chip active" data-filter="all" onclick="setFilter(this,'all')">전체</div>
-      <div class="filter-chip" data-filter="scenic" onclick="setFilter(this,'scenic')">🌅 경치 좋은</div>
-      <div class="filter-chip" data-filter="quiet" onclick="setFilter(this,'quiet')">🌿 조용한</div>
-      <div class="filter-chip" data-filter="night" onclick="setFilter(this,'night')">🌙 야간 가능</div>
-      <div class="filter-chip" data-filter="workout" onclick="setFilter(this,'workout')">💪 운동용</div>
-      <div class="filter-chip" data-filter="short" onclick="setFilter(this,'short')">🚀 짧고 가벼운</div>
-    </div>
-    <div class="list-area">
-      <div class="course-list" id="courseList">
-        <div class="loading">코스 불러오는 중...</div>
-      </div>
+    <div class="fab-buttons-row">
+      <button class="fab-popular" onclick="openPopularModal()">🏆 인기코스</button>
+      <button class="fab-report" onclick="openReportModal()">📍 코스 제보하기</button>
     </div>
   </div>
-</div>
 
 <!-- DETAIL SHEET -->
 <div class="detail-overlay" id="detailOverlay" onclick="closeDetailOnBg(event)">
@@ -136,6 +112,17 @@
       <button class="modal-cancel" onclick="closeRecordModal()">취소</button>
       <button class="modal-save" onclick="saveRecord()">저장하기</button>
     </div>
+  </div>
+</div>
+
+<!-- 인기코스 모달 -->
+<div class="popular-overlay" id="popularOverlay" onclick="closePopularOnBg(event)">
+  <div class="popular-sheet">
+    <div class="popular-header">
+      <div class="popular-title">🏆 인기코스 TOP 10</div>
+      <button class="popular-close" onclick="closePopularModal()">✕</button>
+    </div>
+    <div class="popular-list" id="popularList"></div>
   </div>
 </div>
 

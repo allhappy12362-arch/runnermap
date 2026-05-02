@@ -431,6 +431,30 @@ function initTicker() {
   ).join('');
 }
 
+function openPopularModal() {
+  const overlay = document.getElementById('popularOverlay');
+  overlay.classList.add('open');
+  const list = document.getElementById('popularList');
+  const sorted = [...COURSES].sort((a,b) => (b.pop||0) - (a.pop||0)).slice(0,10);
+  list.innerHTML = sorted.map((c,i) => {
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    return `<div class="popular-item" onclick="closePopularModal();openDetail(${c.id})">
+      <div class="popular-rank ${rankClass}">${i+1}</div>
+      <div class="popular-info">
+        <div class="popular-name">${c.name}</div>
+        <div class="popular-meta">${c.region} · ${c.type==='scenic'?'🌅 경치 좋음':c.type==='quiet'?'🌿 조용함':c.type==='workout'?'💪 운동용':'🌙 야간 가능'}</div>
+      </div>
+      <div class="popular-km">${c.km}km</div>
+    </div>`;
+  }).join('');
+}
+function closePopularModal() {
+  document.getElementById('popularOverlay').classList.remove('open');
+}
+function closePopularOnBg(e) {
+  if (e.target.id === 'popularOverlay') closePopularModal();
+}
+
 loadCourses();
 initTicker();
 
