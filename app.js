@@ -36,9 +36,11 @@ function initKakaoMap() {
   const container = document.getElementById('kakaoMap');
   const options = {
     center: new kakao.maps.LatLng(37.5326, 127.0246),
-    level: 7
+    level: 7,
+    mapTypeId: kakao.maps.MapTypeId.ROADMAP
   };
   kakaoMap = new kakao.maps.Map(container, options);
+  kakaoMap.setZoomable(true);
 
   // 내 위치
   if (navigator.geolocation) {
@@ -47,9 +49,6 @@ function initKakaoMap() {
       const lng = pos.coords.longitude;
       const myPos = new kakao.maps.LatLng(lat, lng);
       kakaoMap.setCenter(myPos);
-      const myContent = `<div style="width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,0.6);box-shadow:0 0 0 4px rgba(255,255,255,0.15)"></div>`;
-      const myOverlay = new kakao.maps.CustomOverlay({ position: myPos, content: myContent });
-      myOverlay.setMap(kakaoMap);
     }, () => {});
   }
 
