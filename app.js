@@ -116,60 +116,96 @@ function handlePinClick(id) {
   openDetail(id);
 }
 
-function showCourseRoute(id) {
+// OSRM 라우팅 캐시 — 같은 코스 반복 클릭 시 API 재호출 방지
+const _osrmCache = {};
+
+async function showCourseRoute(id) {
   if (!kakaoMap) return;
   const c = COURSES.find(x => x.id === id);
   if (!c || !c.path || !c.path.length) return;
 
-  // 기존 경로 제거
   clearRouteOverlay();
 
   const colorMap = { scenic: '#4d9fff', quiet: '#9d7fff', night: '#ff9d3d', workout: '#ff4d4d' };
   const color = colorMap[c.type] || '#c8ff00';
 
-  // Polyline 경로 그리기
-  const linePath = c.path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+  // 로딩 표시
+  document.getElementById('routeInfoKm').textContent = '경로 불러오는 중...';
+  document.getElementById('routeInfoName').textContent = c.name;
+  document.getElementById('routeInfoOverlay').classList.add('visible');
+
+  let linePath;
+
+  try {
+    // 캐시 확인
+    if (_osrmCache[id]) {
+      linePath = _osrmCache[id];
+    } else {
+      // OSRM foot 라우팅 API — 경유 웨이포인트 모두 사용
+      // 웨이포인트가 너무 많으면 URL이 길어지므로 최대 25개로 균등 샘플링
+      let waypoints = c.path;
+      if (waypoints.length > 25) {
+        const step = (waypoints.length - 1) / 24;
+        waypoints = Array.from({length: 25}, (_, i) => waypoints[Math.round(i * step)]);
+      }
+      const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
+      const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('OSRM 응답 오류');
+      const data = await res.json();
+
+      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('경로 없음');
+
+      // GeoJSON coordinates: [lng, lat] → kakao.maps.LatLng(lat, lng)
+      linePath = data.routes[0].geometry.coordinates.map(
+        ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
+      );
+      _osrmCache[id] = linePath;
+    }
+  } catch (e) {
+    // OSRM 실패 시 원본 path 직선 폴백
+    console.warn('OSRM 실패, 직선 경로로 표시:', e.message);
+    linePath = c.path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+  }
+
+  // Polyline 그리기
   activePolyline = new kakao.maps.Polyline({
     map: kakaoMap,
     path: linePath,
     strokeWeight: 5,
     strokeColor: color,
-    strokeOpacity: 0.85,
+    strokeOpacity: 0.88,
     strokeStyle: 'solid'
   });
 
-  // 시작점 마커 🟢
+  // 출발 마커
   const startContent = `<div style="display:flex;flex-direction:column;align-items:center">
     <div style="background:#0d0d0d;border:1.5px solid #c8ff00;border-radius:20px;padding:2px 8px;font-size:10px;color:#c8ff00;font-family:'Noto Sans KR',sans-serif;margin-bottom:3px;white-space:nowrap;">▶ 출발</div>
     <div style="width:10px;height:10px;border-radius:50%;background:#c8ff00;border:2px solid #0d0d0d;"></div>
   </div>`;
-  const startOverlay = new kakao.maps.CustomOverlay({
-    position: linePath[0], content: startContent, yAnchor: 1
-  });
+  const startOverlay = new kakao.maps.CustomOverlay({ position: linePath[0], content: startContent, yAnchor: 1 });
   startOverlay.setMap(kakaoMap);
   activeRouteMarkers.push(startOverlay);
 
-  // 도착점 마커 🔴
+  // 도착 마커
   const endPt = linePath[linePath.length - 1];
   const endContent = `<div style="display:flex;flex-direction:column;align-items:center">
     <div style="background:#0d0d0d;border:1.5px solid ${color};border-radius:20px;padding:2px 8px;font-size:10px;color:${color};font-family:'Noto Sans KR',sans-serif;margin-bottom:3px;white-space:nowrap;">■ 도착</div>
     <div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid #0d0d0d;"></div>
   </div>`;
-  const endOverlay = new kakao.maps.CustomOverlay({
-    position: endPt, content: endContent, yAnchor: 1
-  });
+  const endOverlay = new kakao.maps.CustomOverlay({ position: endPt, content: endContent, yAnchor: 1 });
   endOverlay.setMap(kakaoMap);
   activeRouteMarkers.push(endOverlay);
 
-  // 지도 zoom & 중앙 이동 — 경로 전체가 보이게
+  // 전체 경로 보이게 줌 조정
   const bounds = new kakao.maps.LatLngBounds();
   linePath.forEach(p => bounds.extend(p));
-  kakaoMap.setBounds(bounds, 60); // 패딩 60px
+  kakaoMap.setBounds(bounds, 60);
 
-  // 지도 상단 route info 표시
+  // route info 업데이트
   document.getElementById('routeInfoKm').textContent = c.km + 'km';
   document.getElementById('routeInfoName').textContent = c.name;
-  document.getElementById('routeInfoOverlay').classList.add('visible');
 }
 
 function clearRouteOverlay() {
@@ -1049,11 +1085,161 @@ function renderBadgeTab(body, notice) {
 
 // ── 제보 모달 ──
 let selectedReportType = '';
+// ── 제보 지도 상태 ──
+let reportMap = null;
+let reportWaypoints = [];      // 사용자가 찍은 좌표 [[lat,lng], ...]
+let reportPolyline = null;
+let reportDotOverlays = [];
+let reportOsrmPath = [];       // OSRM이 반환한 실제 경로 (저장용)
+
 function openReportModal() {
   document.getElementById('reportOverlay').classList.add('open');
+  // 카카오맵 로드된 후 제보 지도 초기화
+  setTimeout(() => initReportMap(), 100);
 }
+
+function initReportMap() {
+  if (!kakao || !kakao.maps) return;
+  if (reportMap) return; // 이미 초기화됨
+
+  const container = document.getElementById('reportMap');
+  const center = kakaoMap
+    ? kakaoMap.getCenter()
+    : new kakao.maps.LatLng(37.5326, 127.0246);
+
+  reportMap = new kakao.maps.Map(container, {
+    center,
+    level: 5,
+    mapTypeId: kakao.maps.MapTypeId.ROADMAP
+  });
+
+  // 지도 클릭 → 웨이포인트 추가
+  kakao.maps.event.addListener(reportMap, 'click', e => {
+    const lat = e.latLng.getLat();
+    const lng = e.latLng.getLng();
+    addReportWaypoint(lat, lng);
+  });
+}
+
+function addReportWaypoint(lat, lng) {
+  reportWaypoints.push([lat, lng]);
+  const idx = reportWaypoints.length;
+
+  // 점 오버레이 (번호 표시)
+  const isFirst = idx === 1;
+  const dotContent = `<div style="
+    width:22px;height:22px;border-radius:50%;
+    background:${isFirst ? '#c8ff00' : '#fff'};
+    border:2px solid #0d0d0d;
+    font-size:10px;font-weight:700;color:#0d0d0d;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 1px 6px rgba(0,0,0,0.5);
+    font-family:'DM Mono',monospace;
+  ">${idx}</div>`;
+
+  const dot = new kakao.maps.CustomOverlay({
+    position: new kakao.maps.LatLng(lat, lng),
+    content: dotContent,
+    yAnchor: 0.5, xAnchor: 0.5, zIndex: 5
+  });
+  dot.setMap(reportMap);
+  reportDotOverlays.push(dot);
+
+  // 힌트 텍스트 업데이트
+  const hint = document.getElementById('reportMapHint');
+  if (idx === 1) hint.textContent = '계속 탭해서 경유점을 추가하세요';
+  else if (idx >= 2) hint.textContent = `${idx}개 경유점 · 탭해서 추가`;
+
+  // 2점 이상이면 OSRM 경로 그리기
+  if (reportWaypoints.length >= 2) drawReportRoute();
+}
+
+async function drawReportRoute() {
+  if (reportWaypoints.length < 2) return;
+
+  // 기존 polyline 제거
+  if (reportPolyline) { reportPolyline.setMap(null); reportPolyline = null; }
+
+  try {
+    const coords = reportWaypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
+    const res = await fetch(
+      `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`
+    );
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes?.length) throw new Error('경로 없음');
+
+    const geo = data.routes[0].geometry.coordinates;
+    reportOsrmPath = geo.map(([lng, lat]) => [lat, lng]); // 저장용 [lat,lng]
+    const linePath = geo.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
+
+    reportPolyline = new kakao.maps.Polyline({
+      map: reportMap,
+      path: linePath,
+      strokeWeight: 4,
+      strokeColor: '#c8ff00',
+      strokeOpacity: 0.9,
+      strokeStyle: 'solid'
+    });
+
+    // 거리 계산 (m → km)
+    const distM = data.routes[0].distance;
+    const km = (distM / 1000).toFixed(1);
+    document.getElementById('reportMapDist').textContent = km + ' km';
+    document.getElementById('rKm').value = km;
+
+    // 경로 전체 보이게
+    const bounds = new kakao.maps.LatLngBounds();
+    linePath.forEach(p => bounds.extend(p));
+    reportMap.setBounds(bounds, 30);
+
+  } catch(e) {
+    // 폴백: 직선 연결
+    const linePath = reportWaypoints.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+    reportOsrmPath = [...reportWaypoints];
+    reportPolyline = new kakao.maps.Polyline({
+      map: reportMap, path: linePath,
+      strokeWeight: 4, strokeColor: '#c8ff00', strokeOpacity: 0.7
+    });
+  }
+}
+
+function reportMapUndo() {
+  if (!reportWaypoints.length) return;
+  reportWaypoints.pop();
+  const dot = reportDotOverlays.pop();
+  if (dot) dot.setMap(null);
+  if (reportPolyline) { reportPolyline.setMap(null); reportPolyline = null; }
+  reportOsrmPath = [];
+
+  const hint = document.getElementById('reportMapHint');
+  if (reportWaypoints.length === 0) {
+    hint.textContent = '지도를 탭해서 경유점을 찍어주세요';
+    document.getElementById('reportMapDist').textContent = '0.0 km';
+    document.getElementById('rKm').value = '';
+  } else if (reportWaypoints.length >= 2) {
+    hint.textContent = `${reportWaypoints.length}개 경유점`;
+    drawReportRoute();
+  } else {
+    hint.textContent = '계속 탭해서 경유점을 추가하세요';
+    document.getElementById('reportMapDist').textContent = '0.0 km';
+  }
+}
+
+function reportMapReset() {
+  reportWaypoints = [];
+  reportDotOverlays.forEach(d => d.setMap(null));
+  reportDotOverlays = [];
+  if (reportPolyline) { reportPolyline.setMap(null); reportPolyline = null; }
+  reportOsrmPath = [];
+  document.getElementById('reportMapDist').textContent = '0.0 km';
+  document.getElementById('rKm').value = '';
+  document.getElementById('reportMapHint').textContent = '지도를 탭해서 경유점을 찍어주세요';
+}
+
+
 function closeReportModal() {
   document.getElementById('reportOverlay').classList.remove('open');
+  reportMapReset();
 }
 function closeReportOnBg(e) {
   if (e.target === document.getElementById('reportOverlay')) closeReportModal();
@@ -1074,6 +1260,15 @@ async function submitReport() {
   if (!name || !region || !address || !km || !selectedReportType || !description) {
     showToast('* 표시 항목을 모두 입력해주세요!'); return;
   }
+  if (reportWaypoints.length < 2) {
+    showToast('지도에 경로를 먼저 그려주세요! 🗺️'); return;
+  }
+
+  // 저장할 path: OSRM 결과 있으면 그걸 쓰고, 없으면 웨이포인트 직접 사용
+  const pathToSave = reportOsrmPath.length >= 2 ? reportOsrmPath : reportWaypoints;
+  // 시작 좌표 (핀 위치)
+  const startLat = reportWaypoints[0][0];
+  const startLng = reportWaypoints[0][1];
 
   const btn = document.querySelector('.report-google-btn');
   btn.textContent = '등록 중...';
@@ -1083,10 +1278,13 @@ async function submitReport() {
     await sb.insert('reports', {
       name, region, address, km,
       type: selectedReportType,
-      description, extra, status: 'pending'
+      description, extra,
+      status: 'pending',
+      lat: startLat,
+      lng: startLng,
+      path: JSON.stringify(pathToSave)
     });
 
-    // 폼 초기화
     ['rName','rRegion','rAddress','rKm','rDesc','rExtra'].forEach(id => {
       document.getElementById(id).value = '';
     });
