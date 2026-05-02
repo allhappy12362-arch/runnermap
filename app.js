@@ -1087,22 +1087,34 @@ function renderBadgeTab(body, notice) {
 let selectedReportType = '';
 // ── 제보 지도 상태 ──
 let reportMap = null;
-let reportWaypoints = [];      // 사용자가 찍은 좌표 [[lat,lng], ...]
+let reportWaypoints = [];
 let reportPolyline = null;
 let reportDotOverlays = [];
-let reportOsrmPath = [];       // OSRM이 반환한 실제 경로 (저장용)
+let reportOsrmPath = [];
+let reportMultiSelected = new Set(); // 분위기+편의시설 복수선택
 
 function openReportModal() {
   document.getElementById('reportOverlay').classList.add('open');
-  // 카카오맵 로드된 후 제보 지도 초기화
-  setTimeout(() => initReportMap(), 100);
+  // 카카오맵 로드된 후 제보 지도 초기화 — 시트 애니메이션(0.25s) 후 실행
+  setTimeout(() => initReportMap(), 350);
 }
 
 function initReportMap() {
-  if (!kakao || !kakao.maps) return;
-  if (reportMap) return; // 이미 초기화됨
+  if (!kakao || !kakao.maps) {
+    // 카카오 SDK 아직 로드 안 됐으면 재시도
+    setTimeout(() => initReportMap(), 500);
+    return;
+  }
 
   const container = document.getElementById('reportMap');
+  if (!container) return;
+
+  // 이미 지도 있으면 relayout만 호출 (크기 재계산)
+  if (reportMap) {
+    kakao.maps.event.trigger(reportMap, 'resize');
+    return;
+  }
+
   const center = kakaoMap
     ? kakaoMap.getCenter()
     : new kakao.maps.LatLng(37.5326, 127.0246);
@@ -1225,6 +1237,17 @@ function reportMapUndo() {
   }
 }
 
+function toggleReportMulti(btn) {
+  const key = btn.dataset.key;
+  if (reportMultiSelected.has(key)) {
+    reportMultiSelected.delete(key);
+    btn.classList.remove('selected');
+  } else {
+    reportMultiSelected.add(key);
+    btn.classList.add('selected');
+  }
+}
+
 function reportMapReset() {
   reportWaypoints = [];
   reportDotOverlays.forEach(d => d.setMap(null));
@@ -1234,12 +1257,15 @@ function reportMapReset() {
   document.getElementById('reportMapDist').textContent = '0.0 km';
   document.getElementById('rKm').value = '';
   document.getElementById('reportMapHint').textContent = '지도를 탭해서 경유점을 찍어주세요';
+  // reportMap 객체는 유지
 }
 
 
 function closeReportModal() {
   document.getElementById('reportOverlay').classList.remove('open');
   reportMapReset();
+  reportMultiSelected.clear();
+  document.querySelectorAll('.report-multi-btn').forEach(b => b.classList.remove('selected'));
 }
 function closeReportOnBg(e) {
   if (e.target === document.getElementById('reportOverlay')) closeReportModal();
@@ -1251,24 +1277,31 @@ function selectReportType(btn, type) {
 }
 async function submitReport() {
   const name = document.getElementById('rName').value.trim();
-  const region = document.getElementById('rRegion').value.trim();
-  const address = document.getElementById('rAddress').value.trim();
   const km = parseFloat(document.getElementById('rKm').value);
   const description = document.getElementById('rDesc').value.trim();
-  const extra = document.getElementById('rExtra').value.trim();
 
-  if (!name || !region || !address || !km || !selectedReportType || !description) {
+  if (!name || !km || !selectedReportType || !description) {
     showToast('* 표시 항목을 모두 입력해주세요!'); return;
   }
   if (reportWaypoints.length < 2) {
     showToast('지도에 경로를 먼저 그려주세요! 🗺️'); return;
   }
 
-  // 저장할 path: OSRM 결과 있으면 그걸 쓰고, 없으면 웨이포인트 직접 사용
   const pathToSave = reportOsrmPath.length >= 2 ? reportOsrmPath : reportWaypoints;
-  // 시작 좌표 (핀 위치)
   const startLat = reportWaypoints[0][0];
   const startLng = reportWaypoints[0][1];
+
+  // 분위기 키 목록
+  const vibeKeys = ['scenic','quiet','night','workout','crowd','solo','flat','photo'];
+  // 편의시설 키 목록
+  const facilityKeys = ['toilet','water','store','spot','parking','nosignal','light','bench'];
+
+  const vibes = {};
+  vibeKeys.forEach(k => { vibes[k] = reportMultiSelected.has(k); });
+
+  const facilities = {};
+  facilityKeys.forEach(k => { facilities[k] = reportMultiSelected.has(k); });
+  facilities.signal = reportMultiSelected.has('nosignal') ? '신호등 없음' : '신호등 있음';
 
   const btn = document.querySelector('.report-google-btn');
   btn.textContent = '등록 중...';
@@ -1276,20 +1309,23 @@ async function submitReport() {
 
   try {
     await sb.insert('reports', {
-      name, region, address, km,
+      name, km,
       type: selectedReportType,
-      description, extra,
+      description,
       status: 'pending',
       lat: startLat,
       lng: startLng,
-      path: JSON.stringify(pathToSave)
+      path: JSON.stringify(pathToSave),
+      vibes: JSON.stringify(vibes),
+      facilities: JSON.stringify(facilities)
     });
 
-    ['rName','rRegion','rAddress','rKm','rDesc','rExtra'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
+    // 폼 초기화
+    ['rName','rKm','rDesc'].forEach(id => { document.getElementById(id).value = ''; });
     document.querySelectorAll('.report-type-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.report-multi-btn').forEach(b => b.classList.remove('selected'));
     selectedReportType = '';
+    reportMultiSelected.clear();
     closeReportModal();
     showToast('제보 감사해요! 검토 후 지도에 추가할게요 🙏');
   } catch(e) {
