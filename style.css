@@ -46,7 +46,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .map-placeholder-text a { color: var(--accent); text-decoration: none; }
 
 .map-overlay {
-  position: absolute; bottom: 12px; right: 12px;
+  position: absolute; bottom: 70px; left: 12px;
   display: flex; flex-direction: column; gap: 6px; z-index: 30;
 }
 .map-overlay-btn {
@@ -726,5 +726,5 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   .right-panel.open .panel-toggle-btn { transform: none; }
   .panel-handle { height: 48px; }
   .detail-sheet { max-width: 520px; max-height: 86vh; border-radius: var(--radius-lg); }
-  .fab-ranking { display: none; }
+  .fab-ranking { left: calc(50% - 170px); } /* 사이드패널 고려해서 지도 영역 중앙 */
 }
