@@ -266,7 +266,7 @@ async function loadCourses() {
       mapLevel: c.map_level
     }));
 
-    document.getElementById('courseCount').textContent = COURSES.length; const cc2=document.getElementById('courseCount2'); if(cc2) cc2.textContent=COURSES.length;
+    const _cc=document.getElementById('courseCount'); if(_cc) _cc.textContent = COURSES.length; const cc2=document.getElementById('courseCount2'); if(cc2) cc2.textContent=COURSES.length;
     renderList();
     loadKakaoMap();
     setTimeout(() => renderMapMarkers(), 1500);
@@ -278,13 +278,13 @@ async function loadCourses() {
       const res = await fetch('courses.json');
       const data = await res.json();
       COURSES = data;
-      document.getElementById('courseCount').textContent = COURSES.length; const cc2=document.getElementById('courseCount2'); if(cc2) cc2.textContent=COURSES.length;
+      const _cc=document.getElementById('courseCount'); if(_cc) _cc.textContent = COURSES.length; const cc2=document.getElementById('courseCount2'); if(cc2) cc2.textContent=COURSES.length;
       renderList();
       loadKakaoMap();
       setTimeout(() => renderMapMarkers(), 1500);
       checkUrlCourse();
     } catch(e2) {
-      document.getElementById('courseList').innerHTML =
+      const _cle=document.getElementById('courseList'); if(_cle) _cle.innerHTML =
         '<div style="padding:20px;font-size:13px;color:var(--text3)">코스 데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div>';
     }
   }
@@ -502,8 +502,8 @@ function setFilter(el, filter) {
 // ── 리스트 렌더 ──
 function renderList() {
   const filtered = getFilteredCourses();
-  document.getElementById('courseCount').textContent = filtered.length; const cc2b=document.getElementById('courseCount2'); if(cc2b) cc2b.textContent=filtered.length;
-  document.getElementById('courseList').innerHTML = filtered.map(cardHTML).join('');
+  const _ccf=document.getElementById('courseCount'); if(_ccf) _ccf.textContent = filtered.length; const cc2b=document.getElementById('courseCount2'); if(cc2b) cc2b.textContent=filtered.length;
+  const _cl=document.getElementById('courseList'); if(_cl) _cl.innerHTML = filtered.map(cardHTML).join('');
 }
 
 function cardHTML(c) {
