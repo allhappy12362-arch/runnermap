@@ -1411,7 +1411,404 @@ function checkUrlCourse() {
   }
 }
 
-// ── 토스트 ──
+
+// ═══════════════════════════════════════════════════════
+//  러닝 기록 모드
+// ═══════════════════════════════════════════════════════
+let runMap = null;
+let runPolyline = null;
+let runLocOverlay = null;
+let runPath = [];           // [[lat,lng], ...]
+let runWatchId = null;
+let runStartTime = null;
+let runPauseTime = null;    // 누적 일시정지 ms
+let runPauseStart = null;   // 현재 일시정지 시작
+let runTimerInterval = null;
+let runTotalDist = 0;       // km
+let runIsPaused = false;
+let runIsActive = false;
+let runWakeLock = null;
+
+// ── 러닝 모드 시작 ──
+function startRunMode() {
+  if (!kakao || !kakao.maps) {
+    showToast('지도 로딩 중이에요. 잠시 후 다시 시도해주세요 🙏');
+    return;
+  }
+  if (!navigator.geolocation) {
+    showToast('이 기기는 GPS를 지원하지 않아요');
+    return;
+  }
+
+  // 초기화
+  runPath = [];
+  runTotalDist = 0;
+  runStartTime = null;
+  runPauseTime = 0;
+  runPauseStart = null;
+  runIsPaused = false;
+  runIsActive = true;
+
+  // 오버레이 열기
+  const overlay = document.getElementById('runmodeOverlay');
+  overlay.classList.add('active');
+
+  // HUD 초기화
+  document.getElementById('runDist').textContent = '0.00';
+  document.getElementById('runTime').textContent = '00:00';
+  document.getElementById('runPace').textContent = "--'--\"";
+  document.getElementById('runMainBtnIcon').textContent = '⏸';
+  document.getElementById('runPausedBanner').classList.remove('show');
+
+  // WakeLock — 화면 꺼짐 방지
+  acquireWakeLock();
+
+  // 지도 초기화 (약간 딜레이 후)
+  setTimeout(() => initRunMap(), 200);
+}
+
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      runWakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+
+function releaseWakeLock() {
+  if (runWakeLock) {
+    runWakeLock.release().catch(() => {});
+    runWakeLock = null;
+  }
+}
+
+function initRunMap() {
+  const container = document.getElementById('runMap');
+  if (!container) return;
+
+  // 이미 존재하면 재사용
+  if (runMap) {
+    kakao.maps.event.trigger(runMap, 'resize');
+    startGpsTracking();
+    return;
+  }
+
+  const center = kakaoMap
+    ? kakaoMap.getCenter()
+    : new kakao.maps.LatLng(37.5326, 127.0246);
+
+  runMap = new kakao.maps.Map(container, {
+    center,
+    level: 3,
+    mapTypeId: kakao.maps.MapTypeId.ROADMAP
+  });
+
+  // 지도 컨트롤 숨기기 (카카오 기본 UI)
+  runMap.setZoomable(true);
+
+  startGpsTracking();
+}
+
+function startGpsTracking() {
+  if (runWatchId !== null) {
+    navigator.geolocation.clearWatch(runWatchId);
+  }
+
+  runStartTime = Date.now();
+
+  // 타이머 시작
+  clearInterval(runTimerInterval);
+  runTimerInterval = setInterval(updateRunHUD, 1000);
+
+  // GPS 추적
+  runWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      if (!runIsActive || runIsPaused) return;
+
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const newPt = [lat, lng];
+
+      // 최소 5m 이상 움직였을 때만 경로에 추가 (노이즈 필터)
+      if (runPath.length > 0) {
+        const last = runPath[runPath.length - 1];
+        const d = calcDist(last[0], last[1], lat, lng);
+        if (d < 0.005) return; // 5m 미만 무시
+        runTotalDist += d;
+      }
+
+      runPath.push(newPt);
+      updateRunPolyline();
+      updateRunLocMarker(lat, lng);
+
+      // 지도 중심 이동
+      runMap.setCenter(new kakao.maps.LatLng(lat, lng));
+    },
+    err => {
+      if (err.code === 1) showToast('위치 권한이 필요해요 🙏');
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 10000
+    }
+  );
+}
+
+function updateRunPolyline() {
+  if (!runMap || runPath.length < 2) return;
+
+  if (runPolyline) runPolyline.setMap(null);
+
+  const linePath = runPath.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+  runPolyline = new kakao.maps.Polyline({
+    map: runMap,
+    path: linePath,
+    strokeWeight: 6,
+    strokeColor: '#c8ff00',
+    strokeOpacity: 0.9,
+    strokeStyle: 'solid'
+  });
+}
+
+function updateRunLocMarker(lat, lng) {
+  if (!runMap) return;
+
+  if (runLocOverlay) runLocOverlay.setMap(null);
+
+  const content = `<div class="run-loc-dot"></div>`;
+  runLocOverlay = new kakao.maps.CustomOverlay({
+    position: new kakao.maps.LatLng(lat, lng),
+    content,
+    zIndex: 20,
+    yAnchor: 0.5,
+    xAnchor: 0.5
+  });
+  runLocOverlay.setMap(runMap);
+}
+
+function updateRunHUD() {
+  if (!runIsActive || runIsPaused) return;
+
+  const elapsed = getRunElapsedSec();
+
+  // 시간 포맷
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  const timeStr = h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  document.getElementById('runTime').textContent = timeStr;
+  document.getElementById('runDist').textContent = runTotalDist.toFixed(2);
+
+  // 페이스 (분/km)
+  if (runTotalDist > 0.05 && elapsed > 5) {
+    const paceSecPerKm = elapsed / runTotalDist;
+    const pm = Math.floor(paceSecPerKm / 60);
+    const ps = Math.round(paceSecPerKm % 60);
+    document.getElementById('runPace').textContent = `${pm}'${String(ps).padStart(2,'0')}"`;
+  }
+}
+
+function getRunElapsedSec() {
+  if (!runStartTime) return 0;
+  const now = Date.now();
+  const pausedMs = (runPauseTime || 0) + (runPauseStart ? now - runPauseStart : 0);
+  return Math.floor((now - runStartTime - pausedMs) / 1000);
+}
+
+// ── 일시정지 / 재개 ──
+function toggleRunPause() {
+  if (!runIsActive) return;
+
+  runIsPaused = !runIsPaused;
+
+  if (runIsPaused) {
+    runPauseStart = Date.now();
+    document.getElementById('runMainBtnIcon').textContent = '▶';
+    document.getElementById('runPausedBanner').classList.add('show');
+  } else {
+    if (runPauseStart) {
+      runPauseTime = (runPauseTime || 0) + (Date.now() - runPauseStart);
+      runPauseStart = null;
+    }
+    document.getElementById('runMainBtnIcon').textContent = '⏸';
+    document.getElementById('runPausedBanner').classList.remove('show');
+  }
+}
+
+// ── 종료 ──
+function stopRunMode() {
+  if (!runIsActive) return;
+
+  // 최소 거리 체크
+  if (runTotalDist < 0.1) {
+    if (!confirm('아직 거리가 너무 짧아요 (100m 미만).\n그래도 종료할까요?')) return;
+  }
+
+  runIsActive = false;
+  clearInterval(runTimerInterval);
+
+  if (runWatchId !== null) {
+    navigator.geolocation.clearWatch(runWatchId);
+    runWatchId = null;
+  }
+
+  releaseWakeLock();
+
+  // 완료 통계 계산
+  const elapsed = getRunElapsedSec();
+  const dist = runTotalDist;
+
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  const timeStr = h > 0
+    ? `${h}시간 ${m}분 ${s}초`
+    : `${m}분 ${s}초`;
+
+  let paceStr = '--';
+  if (dist > 0.05 && elapsed > 5) {
+    const pm = Math.floor(elapsed / dist / 60);
+    const ps = Math.round((elapsed / dist) % 60);
+    paceStr = `${pm}'${String(ps).padStart(2,'0')}"`;
+  }
+
+  const kcal = Math.round(dist * 70 * 1.05);
+
+  document.getElementById('finishDist').textContent = dist.toFixed(2);
+  document.getElementById('finishTime').textContent = timeStr;
+  document.getElementById('finishPace').textContent = paceStr;
+  document.getElementById('finishKcal').textContent = kcal;
+
+  // 완료 모달 열기
+  document.getElementById('runFinishOverlay').classList.add('open');
+}
+
+// ── 기록만 저장 ──
+function saveRunAsRecord() {
+  const elapsed = getRunElapsedSec();
+  const dist = runTotalDist;
+  const minDur = Math.round(elapsed / 60);
+
+  records.unshift({
+    id: 'r' + Date.now(),
+    courseId: null,
+    courseName: '내 러닝 경로',
+    date: new Date().toISOString().slice(0, 10),
+    duration: minDur,
+    difficulty: '적당해',
+    satisfaction: 3,
+    wantAgain: true,
+    memo: `${dist.toFixed(2)}km 직접 러닝`
+  });
+  saveState();
+  checkBadges();
+
+  closeRunFinish();
+  showToast('📋 기록이 저장됐어요!');
+}
+
+// ── 기록 + 코스 제보 ──
+function saveRunAndReport() {
+  closeRunFinish();
+
+  // 제보 폼에 경로 자동 주입
+  const path = runPath;
+  const dist = runTotalDist;
+
+  // 제보 모달 열기
+  openReportModal();
+
+  // 잠깐 기다렸다가 경로 주입 (지도 초기화 후)
+  setTimeout(() => {
+    injectRunPathToReport(path, dist);
+  }, 600);
+}
+
+function injectRunPathToReport(path, dist) {
+  if (!reportMap || path.length < 2) return;
+
+  // 기존 내용 초기화
+  reportMapReset();
+
+  // 경로 점 주입
+  path.forEach(([lat, lng]) => {
+    reportWaypoints.push([lat, lng]);
+    const idx = reportWaypoints.length;
+    const dotContent = `<div style="
+      width:18px;height:18px;border-radius:50%;
+      background:${idx===1?'#c8ff00':'rgba(200,255,0,0.5)'};
+      border:2px solid #0d0d0d;font-size:9px;font-weight:700;color:#0d0d0d;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 1px 4px rgba(0,0,0,0.4);
+    ">${idx<=9?idx:'·'}</div>`;
+    const dot = new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(lat, lng),
+      content: dotContent,
+      yAnchor: 0.5, xAnchor: 0.5, zIndex: 5
+    });
+    dot.setMap(reportMap);
+    reportDotOverlays.push(dot);
+  });
+
+  // 경로 직접 그리기 (OSRM 대신 실제 GPS 경로 사용)
+  const linePath = path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+  reportOsrmPath = path;
+
+  if (reportPolyline) reportPolyline.setMap(null);
+  reportPolyline = new kakao.maps.Polyline({
+    map: reportMap,
+    path: linePath,
+    strokeWeight: 4,
+    strokeColor: '#c8ff00',
+    strokeOpacity: 0.9,
+    strokeStyle: 'solid'
+  });
+
+  // 거리 표시
+  const km = dist.toFixed(1);
+  document.getElementById('reportMapDist').textContent = km + ' km';
+  document.getElementById('rKm').value = km;
+
+  // 힌트 업데이트
+  document.getElementById('reportMapHint').textContent = `GPS 경로 자동 입력됨 (${path.length}점)`;
+
+  // 경로 전체 보이게
+  const bounds = new kakao.maps.LatLngBounds();
+  linePath.forEach(p => bounds.extend(p));
+  reportMap.setBounds(bounds, 30);
+
+  showToast('GPS 경로가 제보 폼에 자동 입력됐어요 📍');
+}
+
+// ── 러닝 중 사진 ──
+function captureRunPhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  showToast('📷 사진이 저장됐어요 (추후 기록에 추가 가능)');
+  event.target.value = '';
+}
+
+// ── 완료 모달 닫기 ──
+function closeRunFinish() {
+  document.getElementById('runFinishOverlay').classList.remove('open');
+  document.getElementById('runmodeOverlay').classList.remove('active');
+
+  // 지도 오버레이 정리
+  if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
+  if (runLocOverlay) { runLocOverlay.setMap(null); runLocOverlay = null; }
+}
+
+function discardRun() {
+  if (confirm('이번 러닝 기록을 버릴까요?')) {
+    closeRunFinish();
+    showToast('러닝 기록이 삭제됐어요');
+  }
+}
+
 function showToast(msg) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');

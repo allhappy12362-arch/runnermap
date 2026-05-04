@@ -18,6 +18,7 @@
     <span>내 주변 러닝 코스</span>
   </div>
   <div class="nav-actions">
+    <button class="nav-btn nav-btn-run" onclick="startRunMode()">🏃 러닝 시작</button>
     <button class="nav-btn" onclick="openMyPage('saved')">♡ 저장</button>
     <button class="nav-btn" onclick="openMyPage('records')">📋 기록</button>
   </div>
@@ -240,6 +241,74 @@
     <div class="mypage-tab" id="tabReports" onclick="switchMyTab('reports')">내 제보</div>
   </div>
   <div class="mypage-body" id="mypageBody"></div>
+</div>
+
+<!-- RUN MODE OVERLAY -->
+<div class="runmode-overlay" id="runmodeOverlay">
+  <!-- 전체화면 지도 -->
+  <div id="runMap"></div>
+
+  <!-- 상단 통계 HUD -->
+  <div class="run-hud-top">
+    <div class="run-stat-box">
+      <div class="run-stat-value" id="runDist">0.00</div>
+      <div class="run-stat-label">km</div>
+    </div>
+    <div class="run-stat-divider"></div>
+    <div class="run-stat-box">
+      <div class="run-stat-value" id="runTime">00:00</div>
+      <div class="run-stat-label">시간</div>
+    </div>
+    <div class="run-stat-divider"></div>
+    <div class="run-stat-box">
+      <div class="run-stat-value" id="runPace">--'--"</div>
+      <div class="run-stat-label">페이스/km</div>
+    </div>
+  </div>
+
+  <!-- 일시정지 상태 배너 -->
+  <div class="run-paused-banner" id="runPausedBanner">⏸ 일시정지됨</div>
+
+  <!-- 하단 컨트롤 -->
+  <div class="run-controls">
+    <button class="run-btn-stop" onclick="stopRunMode()">■ 종료</button>
+    <button class="run-btn-main" id="runMainBtn" onclick="toggleRunPause()">
+      <span id="runMainBtnIcon">⏸</span>
+    </button>
+    <button class="run-btn-cam" onclick="document.getElementById('runPhotoInput').click()">📷</button>
+    <input type="file" id="runPhotoInput" accept="image/*" style="display:none" onchange="captureRunPhoto(event)">
+  </div>
+</div>
+
+<!-- 러닝 완료 모달 -->
+<div class="run-finish-overlay" id="runFinishOverlay">
+  <div class="run-finish-sheet">
+    <div class="run-finish-emoji">🎉</div>
+    <div class="run-finish-title">완주했어요!</div>
+    <div class="run-finish-stats">
+      <div class="run-finish-stat">
+        <div class="run-finish-val" id="finishDist">—</div>
+        <div class="run-finish-lbl">km</div>
+      </div>
+      <div class="run-finish-stat">
+        <div class="run-finish-val" id="finishTime">—</div>
+        <div class="run-finish-lbl">시간</div>
+      </div>
+      <div class="run-finish-stat">
+        <div class="run-finish-val" id="finishPace">—</div>
+        <div class="run-finish-lbl">평균 페이스</div>
+      </div>
+      <div class="run-finish-stat">
+        <div class="run-finish-val" id="finishKcal">—</div>
+        <div class="run-finish-lbl">kcal</div>
+      </div>
+    </div>
+    <div class="run-finish-actions">
+      <button class="run-finish-btn-save" onclick="saveRunAsRecord()">📋 기록만 저장</button>
+      <button class="run-finish-btn-report" onclick="saveRunAndReport()">📍 코스로 제보하기</button>
+    </div>
+    <button class="run-finish-btn-discard" onclick="discardRun()">버리기</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
