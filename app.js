@@ -837,21 +837,15 @@ function calcPace(km) {
     ? `${h}시간 ${m}분`
     : `${m}분 ${s.toString().padStart(2,'0')}초`;
 
-  // ── MET 기반 칼로리 계산 (체중 65kg 기준) ──
-  // MET: 속도(km/h)에 따른 운동 강도 지수
-  // 페이스(분/km) → 속도(km/h) = 60 / 페이스(분)
+  // ── 칼로리 계산: 거리 기반 공식 + 페이스 강도 보정 ──
+  // 기본: 체중 × 거리 × 1.036 (널리 검증된 러닝 칼로리 공식)
+  // 강도 보정: 빠를수록 산소소비량 증가 → 최대 15% 추가
+  const weight = 65;
+  const baseKcal = weight * km * 1.036;
   const speedKmh = 60 / (paceMin + paceSec / 60);
-  let met;
-  if (speedKmh < 6.5)       met = 6.0;   // 7분대 이상 (느린 조깅)
-  else if (speedKmh < 8.0)  met = 8.3;   // 7~7.5분 (조깅)
-  else if (speedKmh < 9.5)  met = 10.0;  // 6분대 (중간 페이스)
-  else if (speedKmh < 11.0) met = 11.8;  // 5분대 (빠른 러닝)
-  else if (speedKmh < 13.0) met = 14.5;  // 4분대 (고강도)
-  else                       met = 16.0;  // 4분 미만 (스프린트)
-
-  const timeHour = totalSec / 3600;
-  const weight = 65; // kg 기준
-  const kcal = Math.round(met * weight * timeHour);
+  // 속도 6km/h(10분페이스)~16km/h(3분45초페이스) 기준 0~15% 보정
+  const intensityBonus = Math.min(0.15, Math.max(0, (speedKmh - 6) / 10 * 0.15));
+  const kcal = Math.round(baseKcal * (1 + intensityBonus));
   const burgers = (kcal / 550).toFixed(1);
 
   document.getElementById('paceResultTime').textContent = timeStr;
