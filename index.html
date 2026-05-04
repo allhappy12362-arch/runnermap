@@ -270,7 +270,22 @@
         <span>브라우저 탭을 닫으면 기록이 사라져요</span>
       </div>
     </div>
-    <button class="run-ready-start-btn" onclick="confirmStartRun()">▶ 시작하기</button>
+
+    <!-- 지도 미리보기 -->
+    <div class="run-ready-map-wrap" id="runReadyMapWrap">
+      <div id="runReadyMap"></div>
+      <div class="run-ready-map-hint" id="runReadyMapHint">📍 내 위치 확인을 눌러주세요</div>
+    </div>
+
+    <!-- 내 위치 확인 버튼 -->
+    <button class="run-ready-loc-btn" id="runReadyLocBtn" onclick="locateForRun()">
+      📍 내 위치 확인
+    </button>
+
+    <!-- 시작하기 버튼 (위치 잡기 전엔 비활성) -->
+    <button class="run-ready-start-btn" id="runReadyStartBtn" onclick="confirmStartRun()" disabled>
+      ▶ 시작하기
+    </button>
     <button class="run-ready-cancel-btn" onclick="cancelRunMode()">취소</button>
   </div>
 

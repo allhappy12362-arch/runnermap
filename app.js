@@ -1442,7 +1442,101 @@ function checkUrlCourse() {
 // ═══════════════════════════════════════════════════════
 //  러닝 기록 모드
 // ═══════════════════════════════════════════════════════
-let runMap = null;
+let runReadyMap = null;
+let runReadyLocOverlay = null;
+let runReadyLat = null;
+let runReadyLng = null;
+
+// ── 준비화면 지도 초기화 ──
+function initRunReadyMap() {
+  if (!kakao || !kakao.maps) return;
+  const container = document.getElementById('runReadyMap');
+  if (!container || runReadyMap) return;
+
+  const center = kakaoMap
+    ? kakaoMap.getCenter()
+    : new kakao.maps.LatLng(37.5326, 127.0246);
+
+  runReadyMap = new kakao.maps.Map(container, {
+    center, level: 4,
+    mapTypeId: kakao.maps.MapTypeId.ROADMAP
+  });
+}
+
+// ── 내 위치 확인 버튼 ──
+function locateForRun() {
+  const locBtn = document.getElementById('runReadyLocBtn');
+  locBtn.textContent = '📡 위치 잡는 중...';
+  locBtn.classList.add('locating');
+  locBtn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      runReadyLat = pos.coords.latitude;
+      runReadyLng = pos.coords.longitude;
+
+      // 지도 이동
+      const latlng = new kakao.maps.LatLng(runReadyLat, runReadyLng);
+      runReadyMap.setCenter(latlng);
+      runReadyMap.setLevel(3);
+
+      // 기존 마커 제거
+      if (runReadyLocOverlay) runReadyLocOverlay.setMap(null);
+
+      // 🏃 뛰는 사람 SVG 마커
+      const runnerSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 44 56"
+          style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6));display:block">
+          <!-- 핀 몸통 -->
+          <circle cx="22" cy="20" r="20" fill="#c8ff00"/>
+          <circle cx="22" cy="20" r="20" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1.5"/>
+          <!-- 핀 꼬리 -->
+          <polygon points="22,40 15,50 29,50" fill="#c8ff00"/>
+          <!-- 달리는 사람 (검정) -->
+          <!-- 머리 -->
+          <circle cx="25" cy="9" r="3.5" fill="#0d0d0d"/>
+          <!-- 몸통 -->
+          <line x1="24" y1="13" x2="20" y2="22" stroke="#0d0d0d" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- 팔 앞 -->
+          <line x1="23" y1="15" x2="30" y2="12" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+          <!-- 팔 뒤 -->
+          <line x1="22" y1="16" x2="16" y2="19" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+          <!-- 다리 앞 -->
+          <line x1="20" y1="22" x2="28" y2="29" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- 다리 뒤 -->
+          <line x1="20" y1="22" x2="14" y2="27" stroke="#0d0d0d" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>`;
+
+      runReadyLocOverlay = new kakao.maps.CustomOverlay({
+        position: latlng,
+        content: `<div style="cursor:default">${runnerSvg}</div>`,
+        yAnchor: 1.1, xAnchor: 0.5, zIndex: 10
+      });
+      runReadyLocOverlay.setMap(runReadyMap);
+
+      // 힌트 + 버튼 업데이트
+      document.getElementById('runReadyMapHint').textContent = '✅ 위치 확인됐어요! 시작하기를 눌러주세요';
+      locBtn.textContent = '📍 위치 다시 잡기';
+      locBtn.classList.remove('locating');
+      locBtn.disabled = false;
+
+      // 시작 버튼 활성화
+      const startBtn = document.getElementById('runReadyStartBtn');
+      startBtn.disabled = false;
+      startBtn.style.background = '';
+    },
+    err => {
+      locBtn.textContent = '📍 내 위치 확인';
+      locBtn.classList.remove('locating');
+      locBtn.disabled = false;
+      if (err.code === 1) showToast('위치 권한을 허용해주세요 🙏');
+      else showToast('GPS 신호가 약해요. 야외로 이동 후 다시 시도해주세요');
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
+}
+
+
 let runPolyline = null;
 let runLocOverlay = null;
 let runPath = [];           // [[lat,lng], ...]
@@ -1473,6 +1567,18 @@ function startRunMode() {
   document.getElementById('runReadyScreen').style.display = 'flex';
   document.getElementById('runHudTop').style.display = 'none';
   document.getElementById('runControls').style.display = 'none';
+
+  // 버튼/상태 초기화
+  const startBtn = document.getElementById('runReadyStartBtn');
+  startBtn.disabled = true;
+  document.getElementById('runReadyLocBtn').textContent = '📍 내 위치 확인';
+  document.getElementById('runReadyLocBtn').classList.remove('locating');
+  document.getElementById('runReadyLocBtn').disabled = false;
+  document.getElementById('runReadyMapHint').textContent = '📍 내 위치 확인을 눌러주세요';
+  runReadyLat = null; runReadyLng = null;
+
+  // 준비 지도 초기화
+  setTimeout(() => initRunReadyMap(), 200);
 }
 
 function cancelRunMode() {
@@ -1505,47 +1611,10 @@ function confirmStartRun() {
   // WakeLock
   acquireWakeLock();
 
-  // GPS 먼저 잡고 → 지도 초기화
-  showRunGpsLoading(true);
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      showRunGpsLoading(false);
-      initRunMap(pos.coords.latitude, pos.coords.longitude);
-    },
-    err => {
-      showRunGpsLoading(false);
-      // 권한 거부
-      if (err.code === 1) {
-        showToast('위치 권한이 필요해요 🙏');
-        cancelRunMode();
-        return;
-      }
-      // 타임아웃 등 → 기본 위치로 그냥 시작
-      showToast('GPS 신호가 약해요. 위치 정확도가 낮을 수 있어요');
-      initRunMap(null, null);
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
+  // 이미 내 위치 확인에서 잡은 좌표로 바로 지도 시작
+  initRunMap(runReadyLat, runReadyLng);
 }
 
-function showRunGpsLoading(show) {
-  let el = document.getElementById('runGpsLoading');
-  if (show) {
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'runGpsLoading';
-      el.className = 'run-gps-loading';
-      el.innerHTML = `
-        <div class="run-gps-spinner"></div>
-        <div class="run-gps-text">GPS 위치 잡는 중...<br><small>잠깐만 기다려주세요</small></div>
-      `;
-      document.getElementById('runmodeOverlay').appendChild(el);
-    }
-    el.style.display = 'flex';
-  } else {
-    if (el) el.style.display = 'none';
-  }
-}
 
 async function acquireWakeLock() {
   try {
@@ -1658,16 +1727,27 @@ function updateRunPolyline() {
 
 function updateRunLocMarker(lat, lng) {
   if (!runMap) return;
-
   if (runLocOverlay) runLocOverlay.setMap(null);
 
-  const content = `<div class="run-loc-dot"></div>`;
+  const runnerSvg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52"
+      style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6));display:block">
+      <circle cx="20" cy="18" r="18" fill="#c8ff00"/>
+      <circle cx="20" cy="18" r="18" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>
+      <polygon points="20,36 14,48 26,48" fill="#c8ff00"/>
+      <!-- 달리는 사람 -->
+      <circle cx="23" cy="8" r="3.2" fill="#0d0d0d"/>
+      <line x1="22" y1="12" x2="18" y2="20" stroke="#0d0d0d" stroke-width="2.3" stroke-linecap="round"/>
+      <line x1="21" y1="14" x2="27" y2="11" stroke="#0d0d0d" stroke-width="1.9" stroke-linecap="round"/>
+      <line x1="20" y1="15" x2="15" y2="18" stroke="#0d0d0d" stroke-width="1.9" stroke-linecap="round"/>
+      <line x1="18" y1="20" x2="25" y2="27" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+      <line x1="18" y1="20" x2="13" y2="25" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+
   runLocOverlay = new kakao.maps.CustomOverlay({
     position: new kakao.maps.LatLng(lat, lng),
-    content,
-    zIndex: 20,
-    yAnchor: 0.5,
-    xAnchor: 0.5
+    content: `<div style="pointer-events:none">${runnerSvg}</div>`,
+    zIndex: 20, yAnchor: 1.1, xAnchor: 0.5
   });
   runLocOverlay.setMap(runMap);
 }

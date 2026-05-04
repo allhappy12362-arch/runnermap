@@ -971,7 +971,46 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   transition: all 0.15s; margin-bottom: 10px;
   letter-spacing: 0.3px;
 }
-.run-ready-start-btn:hover { background: #d4ff00; transform: scale(1.02); }
+.run-ready-map-wrap {
+  width: 100%; max-width: 400px;
+  height: 180px; border-radius: var(--radius);
+  overflow: hidden; border: 1.5px solid var(--border2);
+  position: relative; margin-bottom: 12px; flex-shrink: 0;
+  background: var(--bg3);
+}
+#runReadyMap { width: 100%; height: 100%; }
+.run-ready-map-hint {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(13,13,13,0.82); border-radius: 20px;
+  padding: 5px 14px; font-size: 12px; color: var(--text2);
+  white-space: nowrap; pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+.run-ready-loc-btn {
+  width: 100%; max-width: 400px;
+  padding: 13px; border-radius: var(--radius);
+  background: var(--bg3); border: 1.5px solid var(--accent);
+  color: var(--accent); font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.15s; margin-bottom: 10px;
+}
+.run-ready-loc-btn:hover { background: var(--accent-dim); }
+.run-ready-loc-btn:active { transform: scale(0.97); }
+.run-ready-loc-btn.locating {
+  opacity: 0.7; cursor: not-allowed;
+  animation: locPulse 1.2s ease-in-out infinite;
+}
+@keyframes locPulse {
+  0%, 100% { border-color: var(--accent); }
+  50% { border-color: rgba(200,255,0,0.3); }
+}
+.run-ready-start-btn:disabled {
+  background: var(--bg4) !important;
+  color: var(--text3) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
 .run-ready-start-btn:active { transform: scale(0.97); }
 .run-ready-cancel-btn {
   background: none; border: none;
