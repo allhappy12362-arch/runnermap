@@ -411,14 +411,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   background: var(--bg3); border: 0.5px solid var(--border2);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 22px;
 }
-.pace-calc-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+.pace-calc-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.pace-calc-sub { font-size: 12px; color: var(--text3); margin-bottom: 12px; line-height: 1.5; }
 .pace-level-row { display: flex; gap: 6px; margin-bottom: 10px; }
 .pace-level-btn {
   flex: 1; background: var(--bg4); border: 0.5px solid var(--border2);
   border-radius: var(--radius-sm); padding: 8px 4px;
   font-size: 11px; color: var(--text2); cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  transition: all 0.15s; line-height: 1.3; font-family: 'Noto Sans KR', sans-serif;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: all 0.15s; line-height: 1.4; font-family: 'Noto Sans KR', sans-serif;
+  min-height: 54px; justify-content: center; text-align: center;
 }
 .pace-level-btn span { font-size: 10px; color: var(--text3); }
 .pace-level-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
@@ -442,7 +444,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .pace-card-icon { font-size: 16px; margin-bottom: 4px; }
 .pace-card-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text); }
 .pace-card.main .pace-card-value { color: var(--accent); font-size: 16px; }
-.pace-card-label { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.pace-card-label { font-size: 10px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
 .pace-tip { font-size: 12px; color: var(--text2); background: var(--bg2); border-radius: var(--radius-sm); padding: 8px 10px; line-height: 1.5; }
 
 

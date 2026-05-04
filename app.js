@@ -709,34 +709,47 @@ function openDetail(id) {
 
     <div class="pace-calc">
       <div class="pace-calc-title">⏱ 내가 뛰면 얼마나 걸릴까?</div>
+      <div class="pace-calc-sub">내 속도를 선택하면 완주 시간과 칼로리를 계산해드려요</div>
       <div class="pace-level-row">
-        <button class="pace-level-btn active" onclick="setPaceLevel(this,7,0,${c.km})" data-label="🚶 초보">🚶 초보<span>7분/km</span></button>
-        <button class="pace-level-btn" onclick="setPaceLevel(this,6,0,${c.km})" data-label="🏃 보통">🏃 보통<span>6분/km</span></button>
-        <button class="pace-level-btn" onclick="setPaceLevel(this,5,0,${c.km})" data-label="💨 빠름">💨 빠름<span>5분/km</span></button>
-        <button class="pace-level-btn" onclick="setPaceLevel(this,4,0,${c.km})" data-label="🔥 고수">🔥 고수<span>4분/km</span></button>
+        <button class="pace-level-btn active" onclick="setPaceLevel(this,7,0,${c.km})" data-label="🚶 초보">
+          🚶 처음이에요
+          <span>1km에 7분</span>
+        </button>
+        <button class="pace-level-btn" onclick="setPaceLevel(this,6,0,${c.km})" data-label="🏃 보통">
+          🏃 가끔 뛰어요
+          <span>1km에 6분</span>
+        </button>
+        <button class="pace-level-btn" onclick="setPaceLevel(this,5,0,${c.km})" data-label="💨 빠름">
+          💨 자주 뛰어요
+          <span>1km에 5분</span>
+        </button>
+        <button class="pace-level-btn" onclick="setPaceLevel(this,4,0,${c.km})" data-label="🔥 고수">
+          🔥 매일 뛰어요
+          <span>1km에 4분</span>
+        </button>
       </div>
       <div class="pace-custom-row">
-        <span class="pace-label">직접 입력</span>
+        <span class="pace-label">1km 달리는 데</span>
         <input class="pace-input" type="number" id="paceMin" value="7" min="3" max="15" style="max-width:48px" oninput="calcPace(${c.km})">
         <span class="pace-sep">분</span>
         <input class="pace-input" type="number" id="paceSec" value="0" min="0" max="59" style="max-width:48px" oninput="calcPace(${c.km})">
-        <span class="pace-sep">초/km</span>
+        <span class="pace-sep">초 걸려요</span>
       </div>
       <div class="pace-result-cards">
         <div class="pace-card main">
           <div class="pace-card-icon">⏰</div>
-          <div class="pace-card-value" id="paceResultTime">49분 00초</div>
-          <div class="pace-card-label">완주 시간</div>
+          <div class="pace-card-value" id="paceResultTime">—</div>
+          <div class="pace-card-label">완주까지 걸리는 시간</div>
         </div>
         <div class="pace-card">
           <div class="pace-card-icon">🔥</div>
           <div class="pace-card-value" id="paceResultKcal">—</div>
-          <div class="pace-card-label">소모 칼로리</div>
+          <div class="pace-card-label">소모 칼로리 (체중 65kg 기준)</div>
         </div>
         <div class="pace-card">
           <div class="pace-card-icon">🍔</div>
           <div class="pace-card-value" id="paceResultFood">—</div>
-          <div class="pace-card-label">햄버거 몇 개</div>
+          <div class="pace-card-label">햄버거로 따지면</div>
         </div>
       </div>
       <div class="pace-tip" id="paceTip"></div>
@@ -810,31 +823,51 @@ function calcPace(km) {
   const minEl = document.getElementById('paceMin');
   const secEl = document.getElementById('paceSec');
   if (!minEl || !secEl) return;
-  const pacePerKm = (parseInt(minEl.value)||6) * 60 + (parseInt(secEl.value)||0);
+
+  const paceMin = parseInt(minEl.value) || 7;
+  const paceSec = parseInt(secEl.value) || 0;
+  const pacePerKm = paceMin * 60 + paceSec; // 초/km
   const totalSec = Math.round(pacePerKm * km);
+
+  // 완주 시간 포맷
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
   const timeStr = h > 0
     ? `${h}시간 ${m}분`
     : `${m}분 ${s.toString().padStart(2,'0')}초`;
-  const kcal = Math.round(km * 70 * 1.05);
+
+  // ── MET 기반 칼로리 계산 (체중 65kg 기준) ──
+  // MET: 속도(km/h)에 따른 운동 강도 지수
+  // 페이스(분/km) → 속도(km/h) = 60 / 페이스(분)
+  const speedKmh = 60 / (paceMin + paceSec / 60);
+  let met;
+  if (speedKmh < 6.5)       met = 6.0;   // 7분대 이상 (느린 조깅)
+  else if (speedKmh < 8.0)  met = 8.3;   // 7~7.5분 (조깅)
+  else if (speedKmh < 9.5)  met = 10.0;  // 6분대 (중간 페이스)
+  else if (speedKmh < 11.0) met = 11.8;  // 5분대 (빠른 러닝)
+  else if (speedKmh < 13.0) met = 14.5;  // 4분대 (고강도)
+  else                       met = 16.0;  // 4분 미만 (스프린트)
+
+  const timeHour = totalSec / 3600;
+  const weight = 65; // kg 기준
+  const kcal = Math.round(met * weight * timeHour);
   const burgers = (kcal / 550).toFixed(1);
 
   document.getElementById('paceResultTime').textContent = timeStr;
   document.getElementById('paceResultKcal').textContent = `${kcal} kcal`;
   document.getElementById('paceResultFood').textContent = `${burgers}개`;
 
-  // 팁 메시지
-  const paceMin = parseInt(minEl.value)||6;
-  let tip = '';
-  if (paceMin >= 8) tip = '💡 걷기보다 조금 빠른 페이스예요. 숨 편하게 대화 가능!';
-  else if (paceMin === 7) tip = '💡 입문자 적정 페이스. 옆 사람과 짧은 대화 가능한 강도예요.';
-  else if (paceMin === 6) tip = '💡 일반 러너 평균 페이스. 5km 대회 참가자 평균이에요.';
-  else if (paceMin === 5) tip = '💡 10km 대회 입상권 수준. 꽤 빠른 페이스예요!';
-  else if (paceMin <= 4) tip = '🔥 엘리트 수준! 하프마라톤 1시간 25분 페이스예요.';
+  // ── 쉬운 팁 메시지 ──
   const tipEl = document.getElementById('paceTip');
-  if (tipEl) tipEl.textContent = tip;
+  if (!tipEl) return;
+  let tip = '';
+  if (paceMin >= 8)      tip = '💡 대화하면서 편하게 뛸 수 있는 속도예요. 처음 시작하기 딱 좋아요!';
+  else if (paceMin === 7) tip = '💡 숨이 약간 차지만 옆 사람이랑 짧은 대화는 가능한 속도예요.';
+  else if (paceMin === 6) tip = '💡 운동 효과가 확실히 느껴지는 속도예요. 대화는 힘들어요.';
+  else if (paceMin === 5) tip = '💪 꽤 빠른 속도예요! 숨이 많이 차고 온몸에 땀이 나는 강도예요.';
+  else if (paceMin <= 4)  tip = '🔥 엘리트 선수 수준이에요. 이 속도라면 대회 입상도 가능해요!';
+  tipEl.textContent = tip;
 }
 
 function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); }
