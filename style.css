@@ -914,7 +914,53 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .run-btn-cam:hover { background: var(--bg4); }
 .run-btn-cam:active { transform: scale(0.95); }
 
-/* 현재위치 마커 (러닝 중) */
+/* 준비 화면 */
+.run-ready-screen {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(13,13,13,0.96);
+  backdrop-filter: blur(12px);
+  padding: 32px 28px;
+  gap: 0;
+}
+.run-ready-icon { font-size: 52px; margin-bottom: 12px; }
+.run-ready-title {
+  font-size: 22px; font-weight: 700; color: var(--text);
+  margin-bottom: 28px;
+}
+.run-ready-notices {
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 32px;
+}
+.run-ready-notice {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  font-size: 13px; color: var(--text2); line-height: 1.5;
+}
+.run-ready-notice small { font-size: 11px; color: var(--text3); display: block; margin-top: 2px; }
+.run-notice-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.run-ready-start-btn {
+  width: 100%; max-width: 400px;
+  padding: 16px; border-radius: var(--radius);
+  background: var(--accent); border: none;
+  color: #000; font-size: 17px; font-weight: 700;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.15s; margin-bottom: 10px;
+  letter-spacing: 0.3px;
+}
+.run-ready-start-btn:hover { background: #d4ff00; transform: scale(1.02); }
+.run-ready-start-btn:active { transform: scale(0.97); }
+.run-ready-cancel-btn {
+  background: none; border: none;
+  color: var(--text3); font-size: 14px;
+  cursor: pointer; padding: 8px 0;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.run-ready-cancel-btn:hover { color: var(--text2); }
+
+
 .run-loc-dot {
   width: 18px; height: 18px; border-radius: 50%;
   background: var(--accent);

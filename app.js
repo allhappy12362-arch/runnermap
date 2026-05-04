@@ -1429,7 +1429,7 @@ let runIsPaused = false;
 let runIsActive = false;
 let runWakeLock = null;
 
-// ── 러닝 모드 시작 ──
+// ── 러닝 모드 시작 (준비화면) ──
 function startRunMode() {
   if (!kakao || !kakao.maps) {
     showToast('지도 로딩 중이에요. 잠시 후 다시 시도해주세요 🙏');
@@ -1440,6 +1440,20 @@ function startRunMode() {
     return;
   }
 
+  // 준비화면만 열기
+  const overlay = document.getElementById('runmodeOverlay');
+  overlay.classList.add('active');
+  document.getElementById('runReadyScreen').style.display = 'flex';
+  document.getElementById('runHudTop').style.display = 'none';
+  document.getElementById('runControls').style.display = 'none';
+}
+
+function cancelRunMode() {
+  document.getElementById('runmodeOverlay').classList.remove('active');
+}
+
+// ── 실제 시작 (시작하기 버튼 클릭 후) ──
+function confirmStartRun() {
   // 초기화
   runPath = [];
   runTotalDist = 0;
@@ -1449,9 +1463,10 @@ function startRunMode() {
   runIsPaused = false;
   runIsActive = true;
 
-  // 오버레이 열기
-  const overlay = document.getElementById('runmodeOverlay');
-  overlay.classList.add('active');
+  // 준비화면 숨기고 HUD/컨트롤 표시
+  document.getElementById('runReadyScreen').style.display = 'none';
+  document.getElementById('runHudTop').style.display = 'flex';
+  document.getElementById('runControls').style.display = 'flex';
 
   // HUD 초기화
   document.getElementById('runDist').textContent = '0.00';
@@ -1460,10 +1475,10 @@ function startRunMode() {
   document.getElementById('runMainBtnIcon').textContent = '⏸';
   document.getElementById('runPausedBanner').classList.remove('show');
 
-  // WakeLock — 화면 꺼짐 방지
+  // WakeLock
   acquireWakeLock();
 
-  // 지도 초기화 (약간 딜레이 후)
+  // 지도 초기화
   setTimeout(() => initRunMap(), 200);
 }
 
@@ -1782,14 +1797,6 @@ function injectRunPathToReport(path, dist) {
   reportMap.setBounds(bounds, 30);
 
   showToast('GPS 경로가 제보 폼에 자동 입력됐어요 📍');
-}
-
-// ── 러닝 중 사진 ──
-function captureRunPhoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  showToast('📷 사진이 저장됐어요 (추후 기록에 추가 가능)');
-  event.target.value = '';
 }
 
 // ── 완료 모달 닫기 ──

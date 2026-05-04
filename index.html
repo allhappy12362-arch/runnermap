@@ -248,8 +248,34 @@
   <!-- 전체화면 지도 -->
   <div id="runMap"></div>
 
+  <!-- 준비 화면 -->
+  <div class="run-ready-screen" id="runReadyScreen">
+    <div class="run-ready-icon">🏃</div>
+    <div class="run-ready-title">러닝 기록 모드</div>
+    <div class="run-ready-notices">
+      <div class="run-ready-notice">
+        <span class="run-notice-icon">📍</span>
+        <span>GPS로 실시간 경로를 기록해요</span>
+      </div>
+      <div class="run-ready-notice">
+        <span class="run-notice-icon">📱</span>
+        <span>화면을 꺼도 기록은 계속돼요<br><small>단, 앱(브라우저)을 완전히 종료하면 기록이 멈춰요</small></span>
+      </div>
+      <div class="run-ready-notice">
+        <span class="run-notice-icon">🔋</span>
+        <span>배터리 소모가 있어요. 충전 후 시작을 권장해요</span>
+      </div>
+      <div class="run-ready-notice">
+        <span class="run-notice-icon">⚠️</span>
+        <span>브라우저 탭을 닫으면 기록이 사라져요</span>
+      </div>
+    </div>
+    <button class="run-ready-start-btn" onclick="confirmStartRun()">▶ 시작하기</button>
+    <button class="run-ready-cancel-btn" onclick="cancelRunMode()">취소</button>
+  </div>
+
   <!-- 상단 통계 HUD -->
-  <div class="run-hud-top">
+  <div class="run-hud-top" id="runHudTop" style="display:none">
     <div class="run-stat-box">
       <div class="run-stat-value" id="runDist">0.00</div>
       <div class="run-stat-label">km</div>
@@ -270,13 +296,12 @@
   <div class="run-paused-banner" id="runPausedBanner">⏸ 일시정지됨</div>
 
   <!-- 하단 컨트롤 -->
-  <div class="run-controls">
+  <div class="run-controls" id="runControls" style="display:none">
     <button class="run-btn-stop" onclick="stopRunMode()">■ 종료</button>
     <button class="run-btn-main" id="runMainBtn" onclick="toggleRunPause()">
       <span id="runMainBtnIcon">⏸</span>
     </button>
-    <button class="run-btn-cam" onclick="document.getElementById('runPhotoInput').click()">📷</button>
-    <input type="file" id="runPhotoInput" accept="image/*" style="display:none" onchange="captureRunPhoto(event)">
+    <div style="flex:1"></div>
   </div>
 </div>
 
