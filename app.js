@@ -1505,8 +1505,46 @@ function confirmStartRun() {
   // WakeLock
   acquireWakeLock();
 
-  // 지도 초기화
-  setTimeout(() => initRunMap(), 200);
+  // GPS 먼저 잡고 → 지도 초기화
+  showRunGpsLoading(true);
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      showRunGpsLoading(false);
+      initRunMap(pos.coords.latitude, pos.coords.longitude);
+    },
+    err => {
+      showRunGpsLoading(false);
+      // 권한 거부
+      if (err.code === 1) {
+        showToast('위치 권한이 필요해요 🙏');
+        cancelRunMode();
+        return;
+      }
+      // 타임아웃 등 → 기본 위치로 그냥 시작
+      showToast('GPS 신호가 약해요. 위치 정확도가 낮을 수 있어요');
+      initRunMap(null, null);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function showRunGpsLoading(show) {
+  let el = document.getElementById('runGpsLoading');
+  if (show) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'runGpsLoading';
+      el.className = 'run-gps-loading';
+      el.innerHTML = `
+        <div class="run-gps-spinner"></div>
+        <div class="run-gps-text">GPS 위치 잡는 중...<br><small>잠깐만 기다려주세요</small></div>
+      `;
+      document.getElementById('runmodeOverlay').appendChild(el);
+    }
+    el.style.display = 'flex';
+  } else {
+    if (el) el.style.display = 'none';
+  }
 }
 
 async function acquireWakeLock() {
@@ -1524,29 +1562,34 @@ function releaseWakeLock() {
   }
 }
 
-function initRunMap() {
+function initRunMap(lat, lng) {
   const container = document.getElementById('runMap');
   if (!container) return;
 
-  // 이미 존재하면 재사용
+  const center = (lat && lng)
+    ? new kakao.maps.LatLng(lat, lng)
+    : kakaoMap
+      ? kakaoMap.getCenter()
+      : new kakao.maps.LatLng(37.5326, 127.0246);
+
+  // 이미 존재하면 중심만 이동 후 재사용
   if (runMap) {
     kakao.maps.event.trigger(runMap, 'resize');
+    runMap.setCenter(center);
+    runMap.setLevel(3);
     startGpsTracking();
     return;
   }
-
-  const center = kakaoMap
-    ? kakaoMap.getCenter()
-    : new kakao.maps.LatLng(37.5326, 127.0246);
 
   runMap = new kakao.maps.Map(container, {
     center,
     level: 3,
     mapTypeId: kakao.maps.MapTypeId.ROADMAP
   });
-
-  // 지도 컨트롤 숨기기 (카카오 기본 UI)
   runMap.setZoomable(true);
+
+  // GPS 잡힌 위치에 내 위치 마커 즉시 표시
+  if (lat && lng) updateRunLocMarker(lat, lng);
 
   startGpsTracking();
 }
