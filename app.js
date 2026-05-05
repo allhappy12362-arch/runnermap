@@ -1127,7 +1127,7 @@ function openReportModal() {
 }
 
 function initReportMap() {
-  if (!kakao || !kakao.maps) {
+  if (!kakaoReady()) {
     // 카카오 SDK 아직 로드 안 됐으면 재시도
     setTimeout(() => initReportMap(), 500);
     return;
@@ -1442,6 +1442,11 @@ function checkUrlCourse() {
 // ═══════════════════════════════════════════════════════
 //  러닝 기록 모드
 // ═══════════════════════════════════════════════════════
+// ── 카카오맵 준비 확인 헬퍼 ──
+function kakaoReady() {
+  return typeof kakao !== 'undefined' && kakao.maps && kakao.maps.Map;
+}
+
 let runReadyMap = null;
 let runReadyLocOverlay = null;
 let runReadyLat = null;
@@ -1449,9 +1454,14 @@ let runReadyLng = null;
 
 // ── 준비화면 지도 초기화 ──
 function initRunReadyMap() {
-  if (!kakao || !kakao.maps) return;
+  if (!kakaoReady()) return;
   const container = document.getElementById('runReadyMap');
-  if (!container || runReadyMap) return;
+  if (!container) return;
+
+  if (runReadyMap) {
+    runReadyMap.relayout();
+    return;
+  }
 
   const center = kakaoMap
     ? kakaoMap.getCenter()
@@ -1552,7 +1562,7 @@ let runWakeLock = null;
 
 // ── 러닝 모드 시작 (준비화면) ──
 function startRunMode() {
-  if (!kakao || !kakao.maps) {
+  if (!kakaoReady()) {
     showToast('지도 로딩 중이에요. 잠시 후 다시 시도해주세요 🙏');
     return;
   }
@@ -1632,6 +1642,7 @@ function releaseWakeLock() {
 }
 
 function initRunMap(lat, lng) {
+  if (!kakaoReady()) return;
   const container = document.getElementById('runMap');
   if (!container) return;
 
@@ -1641,25 +1652,22 @@ function initRunMap(lat, lng) {
       ? kakaoMap.getCenter()
       : new kakao.maps.LatLng(37.5326, 127.0246);
 
-  // 이미 존재하면 중심만 이동 후 재사용
   if (runMap) {
-    kakao.maps.event.trigger(runMap, 'resize');
+    runMap.relayout();
     runMap.setCenter(center);
     runMap.setLevel(3);
+    if (lat && lng) updateRunLocMarker(lat, lng);
     startGpsTracking();
     return;
   }
 
   runMap = new kakao.maps.Map(container, {
-    center,
-    level: 3,
+    center, level: 3,
     mapTypeId: kakao.maps.MapTypeId.ROADMAP
   });
   runMap.setZoomable(true);
 
-  // GPS 잡힌 위치에 내 위치 마커 즉시 표시
   if (lat && lng) updateRunLocMarker(lat, lng);
-
   startGpsTracking();
 }
 
