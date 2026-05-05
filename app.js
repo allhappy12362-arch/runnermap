@@ -1580,17 +1580,52 @@ function startRunMode() {
   if (!kakaoReady()) { showToast('지도 로딩 중이에요 🙏'); return; }
   if (!navigator.geolocation) { showToast('이 기기는 GPS를 지원하지 않아요'); return; }
 
-  // 버튼/상태 초기화
-  document.getElementById('runReadyStartBtn').disabled = true;
-  document.getElementById('runReadyLocBtn').textContent = '📍 내 위치 확인';
-  document.getElementById('runReadyLocBtn').classList.remove('locating');
-  document.getElementById('runReadyLocBtn').disabled = false;
-  document.getElementById('runReadyMapHint').textContent = '위치를 먼저 확인해주세요';
-  runReadyLat = null; runReadyLng = null;
+  // 이미 메인 지도에서 위치 잡혀있으면 그대로 사용
+  if (myLocationOverlay && myLat && myLng) {
+    runReadyLat = myLat;
+    runReadyLng = myLng;
+    document.getElementById('runReadyMapHint').textContent = '✅ 내 위치 확인됐어요. 바로 시작할 수 있어요!';
+  } else {
+    runReadyLat = null; runReadyLng = null;
+    document.getElementById('runReadyMapHint').textContent = 'GPS로 내 위치를 잡은 뒤 바로 시작돼요';
+  }
 
   // 바텀시트 열기
   document.getElementById('runReadyBackdrop').classList.add('show');
   document.getElementById('runReadySheet').classList.add('show');
+}
+
+
+// ── 시작하기 버튼 → GPS 잡고 즉시 시작 ──
+function startRunNow() {
+  const btn = document.getElementById('runReadyStartBtn');
+  btn.textContent = '📡 GPS 잡는 중...';
+  btn.disabled = true;
+
+  // 이미 위치 있으면 바로 시작
+  if (runReadyLat && runReadyLng) {
+    cancelRunMode();
+    setTimeout(() => confirmStartRun(), 200);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      runReadyLat = pos.coords.latitude;
+      runReadyLng = pos.coords.longitude;
+      myLat = runReadyLat;
+      myLng = runReadyLng;
+      cancelRunMode();
+      setTimeout(() => confirmStartRun(), 200);
+    },
+    err => {
+      btn.textContent = '▶ 시작하기';
+      btn.disabled = false;
+      if (err.code === 1) showToast('위치 권한을 허용해주세요 🙏');
+      else showToast('GPS 신호가 약해요. 야외로 이동 후 다시 시도해주세요');
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
+  );
 }
 
 function cancelRunMode() {
@@ -1760,6 +1795,13 @@ function updateRunHUD() {
     const pm = Math.floor(paceSecPerKm / 60);
     const ps = Math.round(paceSecPerKm % 60);
     document.getElementById('runPace').textContent = `${pm}'${String(ps).padStart(2,'0')}"`;
+
+    // 실시간 칼로리: 거리 기반 + 속도 강도 보정 (체중 65kg)
+    const speedKmh = runTotalDist / (elapsed / 3600);
+    const baseKcal = 65 * runTotalDist * 1.036;
+    const intensityBonus = Math.min(0.15, Math.max(0, (speedKmh - 6) / 10 * 0.15));
+    const kcal = Math.round(baseKcal * (1 + intensityBonus));
+    document.getElementById('runKcal').textContent = kcal;
   }
 }
 
@@ -1834,8 +1876,31 @@ function stopRunMode() {
   document.getElementById('finishPace').textContent = paceStr;
   document.getElementById('finishKcal').textContent = kcal;
 
-  // 완료 모달 열기
-  document.getElementById('runFinishOverlay').classList.add('open');
+  // 완료 통계를 토스트로 표시하고 기록 자동 저장
+  const minDur = Math.round(elapsed / 60);
+  records.unshift({
+    id: 'r' + Date.now(),
+    courseId: runLinkedCourse ? runLinkedCourse.id : null,
+    courseName: runLinkedCourse ? runLinkedCourse.name : '내 러닝 경로',
+    date: new Date().toISOString().slice(0, 10),
+    duration: minDur,
+    difficulty: '적당해',
+    satisfaction: 3,
+    wantAgain: true,
+    memo: `${dist.toFixed(2)}km · ${timeStr} · ${kcal}kcal`
+  });
+  saveState();
+  checkBadges();
+
+  // HUD + 컨트롤 닫기
+  document.getElementById('runHudTop').classList.remove('active');
+  document.getElementById('runControls').classList.remove('active');
+  document.getElementById('runPausedBanner').classList.remove('show');
+  if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
+  if (runLocOverlay) { runLocOverlay.setMap(null); runLocOverlay = null; }
+  runLinkedCourse = null;
+
+  showToast(`🎉 ${dist.toFixed(2)}km · ${timeStr} · ${kcal}kcal 저장됐어요!`);
 }
 
 // ── 기록만 저장 ──
@@ -1938,7 +2003,7 @@ function injectRunPathToReport(path, dist) {
 
 // ── 완료 모달 닫기 ──
 function closeRunFinish() {
-  document.getElementById('runFinishOverlay').classList.remove('open');
+  // 완주 모달 제거됨
   document.getElementById('runHudTop').classList.remove('active');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');

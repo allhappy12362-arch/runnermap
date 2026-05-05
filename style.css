@@ -1058,3 +1058,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   .detail-sheet { max-width: 520px; max-height: 86vh; border-radius: var(--radius-lg); }
   .fab-ranking { left: calc(50% - 170px); } /* 사이드패널 고려해서 지도 영역 중앙 */
 }
+
+.run-ready-start-btn.active {
+  background: var(--accent) !important;
+  color: #0d0d0d !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
