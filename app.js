@@ -1442,6 +1442,21 @@ function checkUrlCourse() {
 // ═══════════════════════════════════════════════════════
 //  러닝 기록 모드
 // ═══════════════════════════════════════════════════════
+let runLinkedCourse = null; // 코스 상세에서 시작할 때 연결된 코스
+
+// ── 코스 상세에서 러닝 시작 ──
+function startRunWithCourse() {
+  if (!kakaoReady()) { showToast('지도 로딩 중이에요 🙏'); return; }
+  if (!navigator.geolocation) { showToast('이 기기는 GPS를 지원하지 않아요'); return; }
+
+  const c = COURSES.find(x => x.id === currentCourseId);
+  if (!c) return;
+
+  runLinkedCourse = c;
+  closeDetail();
+  setTimeout(() => startRunMode(), 300);
+}
+
 // ── 카카오맵 준비 확인 헬퍼 ──
 function kakaoReady() {
   return typeof kakao !== 'undefined' && kakao.maps && kakao.maps.Map;
@@ -1562,41 +1577,33 @@ let runWakeLock = null;
 
 // ── 러닝 모드 시작 (준비화면) ──
 function startRunMode() {
-  if (!kakaoReady()) {
-    showToast('지도 로딩 중이에요. 잠시 후 다시 시도해주세요 🙏');
-    return;
-  }
-  if (!navigator.geolocation) {
-    showToast('이 기기는 GPS를 지원하지 않아요');
-    return;
-  }
-
-  // 준비화면만 열기
-  const overlay = document.getElementById('runmodeOverlay');
-  overlay.classList.add('active');
-  document.getElementById('runReadyScreen').style.display = 'flex';
-  document.getElementById('runHudTop').style.display = 'none';
-  document.getElementById('runControls').style.display = 'none';
+  if (!kakaoReady()) { showToast('지도 로딩 중이에요 🙏'); return; }
+  if (!navigator.geolocation) { showToast('이 기기는 GPS를 지원하지 않아요'); return; }
 
   // 버튼/상태 초기화
-  const startBtn = document.getElementById('runReadyStartBtn');
-  startBtn.disabled = true;
+  document.getElementById('runReadyStartBtn').disabled = true;
   document.getElementById('runReadyLocBtn').textContent = '📍 내 위치 확인';
   document.getElementById('runReadyLocBtn').classList.remove('locating');
   document.getElementById('runReadyLocBtn').disabled = false;
-  document.getElementById('runReadyMapHint').textContent = '📍 내 위치 확인을 눌러주세요';
+  document.getElementById('runReadyMapHint').textContent = '위치를 먼저 확인해주세요';
   runReadyLat = null; runReadyLng = null;
 
-  // 준비 지도 초기화
-  setTimeout(() => initRunReadyMap(), 200);
+  // 바텀시트 열기
+  document.getElementById('runReadyBackdrop').classList.add('show');
+  document.getElementById('runReadySheet').classList.add('show');
 }
 
 function cancelRunMode() {
-  document.getElementById('runmodeOverlay').classList.remove('active');
+  document.getElementById('runReadyBackdrop').classList.remove('show');
+  document.getElementById('runReadySheet').classList.remove('show');
 }
 
 // ── 실제 시작 (시작하기 버튼 클릭 후) ──
 function confirmStartRun() {
+  // 바텀시트 닫기
+  document.getElementById('runReadyBackdrop').classList.remove('show');
+  document.getElementById('runReadySheet').classList.remove('show');
+
   // 초기화
   runPath = [];
   runTotalDist = 0;
@@ -1606,10 +1613,9 @@ function confirmStartRun() {
   runIsPaused = false;
   runIsActive = true;
 
-  // 준비화면 숨기고 HUD/컨트롤 표시
-  document.getElementById('runReadyScreen').style.display = 'none';
-  document.getElementById('runHudTop').style.display = 'flex';
-  document.getElementById('runControls').style.display = 'flex';
+  // HUD + 컨트롤 표시
+  document.getElementById('runHudTop').classList.add('active');
+  document.getElementById('runControls').classList.add('active');
 
   // HUD 초기화
   document.getElementById('runDist').textContent = '0.00';
@@ -1621,8 +1627,12 @@ function confirmStartRun() {
   // WakeLock
   acquireWakeLock();
 
-  // 이미 내 위치 확인에서 잡은 좌표로 바로 지도 시작
-  initRunMap(runReadyLat, runReadyLng);
+  // 잡아둔 위치로 메인 지도 이동 + 추적 시작
+  if (runReadyLat && runReadyLng) {
+    kakaoMap.setCenter(new kakao.maps.LatLng(runReadyLat, runReadyLng));
+    kakaoMap.setLevel(3);
+  }
+  startGpsTracking();
 }
 
 
@@ -1641,44 +1651,27 @@ function releaseWakeLock() {
   }
 }
 
-function initRunMap(lat, lng) {
-  if (!kakaoReady()) return;
-  const container = document.getElementById('runMap');
-  if (!container) return;
-
-  const center = (lat && lng)
-    ? new kakao.maps.LatLng(lat, lng)
-    : kakaoMap
-      ? kakaoMap.getCenter()
-      : new kakao.maps.LatLng(37.5326, 127.0246);
-
-  if (runMap) {
-    runMap.relayout();
-    runMap.setCenter(center);
-    runMap.setLevel(3);
-    if (lat && lng) updateRunLocMarker(lat, lng);
-    startGpsTracking();
-    return;
-  }
-
-  runMap = new kakao.maps.Map(container, {
-    center, level: 3,
-    mapTypeId: kakao.maps.MapTypeId.ROADMAP
-  });
-  runMap.setZoomable(true);
-
-  if (lat && lng) updateRunLocMarker(lat, lng);
-  startGpsTracking();
-}
 
 function startGpsTracking() {
-  if (runWatchId !== null) {
-    navigator.geolocation.clearWatch(runWatchId);
-  }
+  if (runWatchId !== null) navigator.geolocation.clearWatch(runWatchId);
 
   runStartTime = Date.now();
 
-  // 타이머 시작
+  // 연결된 코스 경로 메인 지도에 표시 (점선 가이드)
+  if (runLinkedCourse && runLinkedCourse.path && runLinkedCourse.path.length > 1) {
+    const guidePath = runLinkedCourse.path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+    new kakao.maps.Polyline({
+      map: kakaoMap,
+      path: guidePath,
+      strokeWeight: 5,
+      strokeColor: 'rgba(200,255,0,0.4)',
+      strokeOpacity: 1,
+      strokeStyle: 'dashed'
+    });
+    showToast(`📍 ${runLinkedCourse.name} 경로를 따라 뛰어요!`);
+  }
+
+  // 타이머
   clearInterval(runTimerInterval);
   runTimerInterval = setInterval(updateRunHUD, 1000);
 
@@ -1686,45 +1679,32 @@ function startGpsTracking() {
   runWatchId = navigator.geolocation.watchPosition(
     pos => {
       if (!runIsActive || runIsPaused) return;
-
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      const newPt = [lat, lng];
 
-      // 최소 5m 이상 움직였을 때만 경로에 추가 (노이즈 필터)
       if (runPath.length > 0) {
         const last = runPath[runPath.length - 1];
         const d = calcDist(last[0], last[1], lat, lng);
-        if (d < 0.005) return; // 5m 미만 무시
+        if (d < 0.005) return;
         runTotalDist += d;
       }
 
-      runPath.push(newPt);
+      runPath.push([lat, lng]);
       updateRunPolyline();
       updateRunLocMarker(lat, lng);
-
-      // 지도 중심 이동
-      runMap.setCenter(new kakao.maps.LatLng(lat, lng));
+      kakaoMap.setCenter(new kakao.maps.LatLng(lat, lng));
     },
-    err => {
-      if (err.code === 1) showToast('위치 권한이 필요해요 🙏');
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 10000
-    }
+    err => { if (err.code === 1) showToast('위치 권한이 필요해요 🙏'); },
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
   );
 }
 
 function updateRunPolyline() {
-  if (!runMap || runPath.length < 2) return;
-
+  if (runPath.length < 2) return;
   if (runPolyline) runPolyline.setMap(null);
-
   const linePath = runPath.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
   runPolyline = new kakao.maps.Polyline({
-    map: runMap,
+    map: kakaoMap,
     path: linePath,
     strokeWeight: 6,
     strokeColor: '#c8ff00',
@@ -1734,16 +1714,13 @@ function updateRunPolyline() {
 }
 
 function updateRunLocMarker(lat, lng) {
-  if (!runMap) return;
   if (runLocOverlay) runLocOverlay.setMap(null);
-
   const runnerSvg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52"
       style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6));display:block">
       <circle cx="20" cy="18" r="18" fill="#c8ff00"/>
       <circle cx="20" cy="18" r="18" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>
       <polygon points="20,36 14,48 26,48" fill="#c8ff00"/>
-      <!-- 달리는 사람 -->
       <circle cx="23" cy="8" r="3.2" fill="#0d0d0d"/>
       <line x1="22" y1="12" x2="18" y2="20" stroke="#0d0d0d" stroke-width="2.3" stroke-linecap="round"/>
       <line x1="21" y1="14" x2="27" y2="11" stroke="#0d0d0d" stroke-width="1.9" stroke-linecap="round"/>
@@ -1751,14 +1728,15 @@ function updateRunLocMarker(lat, lng) {
       <line x1="18" y1="20" x2="25" y2="27" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
       <line x1="18" y1="20" x2="13" y2="25" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
     </svg>`;
-
   runLocOverlay = new kakao.maps.CustomOverlay({
     position: new kakao.maps.LatLng(lat, lng),
     content: `<div style="pointer-events:none">${runnerSvg}</div>`,
     zIndex: 20, yAnchor: 1.1, xAnchor: 0.5
   });
-  runLocOverlay.setMap(runMap);
+  runLocOverlay.setMap(kakaoMap);
 }
+
+
 
 function updateRunHUD() {
   if (!runIsActive || runIsPaused) return;
@@ -1868,8 +1846,8 @@ function saveRunAsRecord() {
 
   records.unshift({
     id: 'r' + Date.now(),
-    courseId: null,
-    courseName: '내 러닝 경로',
+    courseId: runLinkedCourse ? runLinkedCourse.id : null,
+    courseName: runLinkedCourse ? runLinkedCourse.name : '내 러닝 경로',
     date: new Date().toISOString().slice(0, 10),
     duration: minDur,
     difficulty: '적당해',
@@ -1879,6 +1857,7 @@ function saveRunAsRecord() {
   });
   saveState();
   checkBadges();
+  runLinkedCourse = null;
 
   closeRunFinish();
   showToast('📋 기록이 저장됐어요!');
@@ -1960,7 +1939,10 @@ function injectRunPathToReport(path, dist) {
 // ── 완료 모달 닫기 ──
 function closeRunFinish() {
   document.getElementById('runFinishOverlay').classList.remove('open');
-  document.getElementById('runmodeOverlay').classList.remove('active');
+  document.getElementById('runHudTop').classList.remove('active');
+  document.getElementById('runControls').classList.remove('active');
+  document.getElementById('runPausedBanner').classList.remove('show');
+  runLinkedCourse = null;
 
   // 지도 오버레이 정리
   if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
