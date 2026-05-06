@@ -5,7 +5,7 @@ function loadKakaoMap() {
     return;
   }
   const script = document.createElement('script');
-  script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&libraries=services&autoload=false`;
+  script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&libraries=services&autoload=false`;
   script.onload = () => {
     kakao.maps.load(() => {
       initKakaoMap();
