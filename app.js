@@ -1581,6 +1581,11 @@ function startRunMode() {
   if (!kakaoReady()) { showToast('지도 로딩 중이에요 🙏'); return; }
   if (!navigator.geolocation) { showToast('이 기기는 GPS를 지원하지 않아요'); return; }
 
+  // 버튼 상태 초기화
+  const btn = document.getElementById('runReadyStartBtn');
+  btn.textContent = '▶ 시작하기';
+  btn.disabled = false;
+
   // 이미 메인 지도에서 위치 잡혀있으면 그대로 사용
   if (myLocationOverlay && myLat && myLng) {
     runReadyLat = myLat;
