@@ -1073,19 +1073,39 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   gap: 0;
   flex: 1;
   justify-content: center;
+  min-width: 0;
 }
 .nav-run-hud.active { display: flex; }
 .nav-hud-box {
-  display: flex; align-items: baseline; gap: 4px;
-  padding: 0 14px;
+  display: flex; align-items: baseline; gap: 3px;
+  padding: 0 8px;
+  flex: 1; justify-content: center;
+  min-width: 0;
 }
 .nav-hud-val {
   font-family: 'DM Mono', monospace;
-  font-size: 18px; font-weight: 500;
+  font-size: 16px; font-weight: 500;
   color: var(--accent); line-height: 1;
+  white-space: nowrap;
 }
 .nav-hud-lbl {
-  font-size: 10px; color: var(--text3);
-  text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 9px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  white-space: nowrap;
 }
-.nav-hud-div { width: 1px; height: 22px; background: rgba(255,255,255,0.12); flex-shrink: 0; }
+.nav-hud-div { width: 1px; height: 20px; background: rgba(255,255,255,0.12); flex-shrink: 0; }
+
+/* 러닝 중 nav 로고/버튼 숨기기 */
+.nav.running .nav-logo { display: none; }
+.nav.running .nav-actions { display: none; }
+.nav.running .nav-run-hud { display: flex; }
+
+/* 모바일: nav 로고 숨기고 HUD 풀너비 */
+@media (max-width: 600px) {
+  .nav-logo { display: none; }
+  .nav-run-hud { flex: 1; gap: 0; }
+  .nav-hud-box { padding: 0 8px; flex: 1; justify-content: center; }
+  .nav-hud-val { font-size: 15px; }
+  .nav-hud-lbl { font-size: 9px; }
+  .nav-actions { flex-shrink: 0; }
+}
