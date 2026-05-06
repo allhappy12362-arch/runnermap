@@ -1927,15 +1927,6 @@ function stopRunMode() {
 
 
 // ── 러닝 결과 화면 ──
-const QUOTES = [
-  "느려도 괜찮다 — 멈추지만 않으면 된다",
-  "오늘의 1km가 내일의 10km를 만든다",
-  "달리기는 몸이 아니라 마음이 먼저 포기한다",
-  "땀은 거짓말하지 않는다",
-  "지금 이 순간도 누군가는 달리고 있다",
-  "어제보다 오늘, 오늘보다 내일",
-];
-
 function showRunResult({ dist, timeStr, elapsed, kcal }) {
   const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
