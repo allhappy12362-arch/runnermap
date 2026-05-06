@@ -1643,6 +1643,16 @@ function confirmStartRun() {
   document.getElementById('runReadySheet').classList.remove('show');
 
   // 초기화
+  // 이전 GPS watch 정리
+  if (runWatchId !== null) {
+    navigator.geolocation.clearWatch(runWatchId);
+    runWatchId = null;
+  }
+  if (runTimerInterval) {
+    clearInterval(runTimerInterval);
+    runTimerInterval = null;
+  }
+
   runPath = [];
   runTotalDist = 0;
   runStartTime = null;
@@ -1653,6 +1663,7 @@ function confirmStartRun() {
 
   // HUD + 컨트롤 표시
   document.getElementById('navRunHud').classList.add('active');
+  document.querySelector('.nav').classList.add('running');
   document.getElementById('runControls').classList.add('active');
 
   // HUD 초기화
@@ -1845,12 +1856,19 @@ function stopRunMode() {
   }
 
   runIsActive = false;
+  runIsPaused = false;
   clearInterval(runTimerInterval);
+  runTimerInterval = null;
 
   if (runWatchId !== null) {
     navigator.geolocation.clearWatch(runWatchId);
     runWatchId = null;
   }
+
+  runPath = [];
+  runStartTime = null;
+  runPauseTime = 0;
+  runPauseStart = null;
 
   releaseWakeLock();
 
@@ -1892,6 +1910,7 @@ function stopRunMode() {
 
   // HUD + 컨트롤 닫기
   document.getElementById('navRunHud').classList.remove('active');
+  document.querySelector('.nav').classList.remove('running');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');
   if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
@@ -2003,6 +2022,7 @@ function injectRunPathToReport(path, dist) {
 function closeRunFinish() {
   // 완주 모달 제거됨
   document.getElementById('navRunHud').classList.remove('active');
+  document.querySelector('.nav').classList.remove('running');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');
   runLinkedCourse = null;
