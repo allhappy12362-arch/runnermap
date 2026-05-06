@@ -1944,7 +1944,7 @@ function showRunResult({ dist, timeStr, elapsed, kcal }) {
   const fat = Math.round(kcal / 7.7);
 
   // 페이스
-  let paceStr = '--'--"';
+  let paceStr = `--'--"`;
   if (dist > 0.05 && elapsed > 5) {
     const pm = Math.floor(elapsed / dist / 60);
     const ps = Math.round((elapsed / dist) % 60);
