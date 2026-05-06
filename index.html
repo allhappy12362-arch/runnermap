@@ -68,34 +68,6 @@
       </svg>
     </button>
   </div>
-
-  <!-- RIGHT PANEL (코스 리스트) -->
-  <div class="right-panel open" id="rightPanel">
-    <div class="panel-handle" onclick="togglePanel()">
-      <div class="panel-handle-title">
-        코스 <span id="courseCount">0</span>개
-      </div>
-      <button class="panel-toggle-btn">▼</button>
-    </div>
-    <!-- 검색바 -->
-    <div class="search-bar-wrap">
-      <input class="search-input" id="searchInput" type="text" placeholder="코스 이름, 지역 검색..." oninput="renderList(); renderMapMarkers()">
-      <button class="sort-btn" id="sortBtn" onclick="toggleSortByLocation()" title="내 위치 기준 정렬">📍</button>
-    </div>
-    <!-- 필터 칩 -->
-    <div class="filter-bar">
-      <button class="filter-chip active" onclick="setFilter(this,'all')">전체</button>
-      <button class="filter-chip" onclick="setFilter(this,'scenic')">🌅 경치</button>
-      <button class="filter-chip" onclick="setFilter(this,'quiet')">🌿 조용</button>
-      <button class="filter-chip" onclick="setFilter(this,'night')">🌙 야간</button>
-      <button class="filter-chip" onclick="setFilter(this,'workout')">💪 업다운</button>
-      <button class="filter-chip" onclick="setFilter(this,'short')">⚡ 단거리</button>
-    </div>
-    <!-- 코스 목록 -->
-    <div class="list-area">
-      <div id="courseList"></div>
-    </div>
-  </div>
 </div><!-- /.layout -->
 
 <!-- DETAIL SHEET -->

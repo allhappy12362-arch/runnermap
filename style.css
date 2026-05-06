@@ -1119,30 +1119,30 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   animation: fadeIn 0.2s ease;
 }
 .run-result-sheet {
-  background: var(--color-background-primary);
+  background: var(--bg2);
   border-radius: 20px 20px 0 0;
   width: 100%; max-width: 480px;
   max-height: 92vh; overflow-y: auto;
 }
-.rr-header { background: #0d0d0d; padding: 28px 20px 24px; text-align: center; border-radius: 20px 20px 0 0; }
-.rr-date { font-size: 11px; color: #666; letter-spacing: 1px; margin-bottom: 6px; }
-.rr-quote { font-size: 16px; font-weight: 500; color: #c8ff00; line-height: 1.5; margin-bottom: 4px; }
-.rr-sub { font-size: 12px; color: #555; }
-.rr-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--color-border-tertiary); }
-.rr-stat { background: var(--color-background-primary); padding: 16px 20px; }
-.rr-val { font-size: 26px; font-weight: 500; color: var(--color-text-primary); line-height: 1; font-family: 'DM Mono', monospace; }
-.rr-unit { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; }
-.rr-lbl { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-.rr-divider { height: 0.5px; background: var(--color-border-tertiary); }
+.rr-header { background: var(--bg); padding: 28px 20px 24px; text-align: center; border-radius: 20px 20px 0 0; }
+.rr-date { font-size: 11px; color: var(--text3); letter-spacing: 1px; margin-bottom: 6px; }
+.rr-quote { font-size: 16px; font-weight: 500; color: var(--accent); line-height: 1.5; margin-bottom: 4px; }
+.rr-sub { font-size: 12px; color: var(--text3); }
+.rr-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--border); }
+.rr-stat { background: var(--bg2); padding: 16px 20px; }
+.rr-val { font-size: 26px; font-weight: 500; color: var(--text); line-height: 1; font-family: 'DM Mono', monospace; }
+.rr-unit { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.rr-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.rr-divider { height: 0.5px; background: var(--border); }
 .rr-earned { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-.rr-earn-card { background: var(--color-background-secondary); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.rr-earn-card { background: var(--bg3); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
 .rr-earn-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
-.rr-earn-text { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
-.rr-earn-text strong { font-size: 15px; font-weight: 500; color: var(--color-text-primary); display: block; margin-bottom: 2px; }
-.rr-num { font-weight: 500; color: var(--color-text-primary); font-family: 'DM Mono', monospace; }
+.rr-earn-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+.rr-earn-text strong { font-size: 15px; font-weight: 500; color: var(--text); display: block; margin-bottom: 2px; }
+.rr-num { font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
 .rr-badges { display: flex; gap: 8px; padding: 16px 20px; flex-wrap: wrap; }
-.result-badge { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; padding: 6px 12px; font-size: 12px; color: var(--color-text-secondary); }
+.result-badge { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 20px; padding: 6px 12px; font-size: 12px; color: var(--text2); }
 .result-badge.new { background: #3a4a00; border-color: #c8ff00; color: #c8ff00; }
 .rr-footer { padding: 16px 20px; display: flex; gap: 10px; }
-.rr-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-primary); cursor: pointer; }
+.rr-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; border: 0.5px solid var(--border2); background: var(--bg3); color: var(--text); cursor: pointer; }
 .rr-btn.primary { background: #c8ff00; color: #0d0d0d; border-color: #c8ff00; font-weight: 500; }
