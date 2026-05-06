@@ -459,10 +459,7 @@ function getMotivationQuote(courseId) {
 }
 
 // 패널 토글
-function togglePanel() {
-  const panel = document.getElementById('rightPanel');
-  panel.classList.toggle('open');
-}
+function togglePanel() {}
 
 const QUOTES = [
   { text: "고통은 일시적이다. 포기는 영원하다.", author: "Lance Armstrong" },
@@ -1673,7 +1670,7 @@ function confirmStartRun() {
   document.getElementById('navRunHud').classList.add('active');
   document.querySelector('.nav').classList.add('running');
   document.getElementById('runControls').classList.add('active');
-  document.getElementById('rightPanel').style.display = 'none';
+  
 
   // HUD 초기화
   document.getElementById('runDist').textContent = '0.00';
@@ -1922,7 +1919,7 @@ function stopRunMode() {
   document.querySelector('.nav').classList.remove('running');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');
-  document.getElementById('rightPanel').style.display = '';
+  
   if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
   if (runLocOverlay) { runLocOverlay.setMap(null); runLocOverlay = null; }
   runLinkedCourse = null;
