@@ -41,6 +41,9 @@ function initKakaoMap() {
   };
   kakaoMap = new kakao.maps.Map(container, options);
   kakaoMap.setZoomable(true);
+  // 레이아웃 렌더 후 지도 크기 재계산
+  setTimeout(() => { kakaoMap.relayout(); kakaoMap.setCenter(options.center); }, 100);
+  setTimeout(() => { kakaoMap.relayout(); }, 500);
 
   // 내 위치
   if (navigator.geolocation) {
@@ -1670,6 +1673,7 @@ function confirmStartRun() {
   document.getElementById('navRunHud').classList.add('active');
   document.querySelector('.nav').classList.add('running');
   document.getElementById('runControls').classList.add('active');
+  document.getElementById('rightPanel').style.display = 'none';
 
   // HUD 초기화
   document.getElementById('runDist').textContent = '0.00';
@@ -1918,6 +1922,7 @@ function stopRunMode() {
   document.querySelector('.nav').classList.remove('running');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');
+  document.getElementById('rightPanel').style.display = '';
   if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
   if (runLocOverlay) { runLocOverlay.setMap(null); runLocOverlay = null; }
   runLinkedCourse = null;
@@ -1972,7 +1977,7 @@ function showRunResult({ dist, timeStr, elapsed, kcal }) {
   <div class="run-result-sheet">
     <div class="rr-header">
       <div class="rr-date">${today}</div>
-      <div class="rr-quote">"${quote}"</div>
+      <div class="rr-quote">"${quote.text || quote}"</div>
       <div class="rr-sub">오늘도 해냈어요 🎉</div>
     </div>
     <div class="rr-stats">
