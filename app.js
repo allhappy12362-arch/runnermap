@@ -223,6 +223,7 @@ function moveToMyLocation() {
     navigator.geolocation.getCurrentPosition(pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
+      myLat = lat; myLng = lng; // 러닝 시작 시 재사용
       const myPos = new kakao.maps.LatLng(lat, lng);
       kakaoMap.setCenter(myPos);
       kakaoMap.setLevel(4);
@@ -1602,8 +1603,10 @@ function startRunNow() {
   btn.textContent = '📡 GPS 잡는 중...';
   btn.disabled = true;
 
-  // 이미 위치 있으면 바로 시작
-  if (runReadyLat && runReadyLng) {
+  // 메인 지도에서 이미 내 위치 잡혀있으면 바로 시작
+  if (myLat && myLng) {
+    runReadyLat = myLat;
+    runReadyLng = myLng;
     cancelRunMode();
     setTimeout(() => confirmStartRun(), 200);
     return;
@@ -1649,7 +1652,7 @@ function confirmStartRun() {
   runIsActive = true;
 
   // HUD + 컨트롤 표시
-  document.getElementById('runHudTop').classList.add('active');
+  document.getElementById('navRunHud').classList.add('active');
   document.getElementById('runControls').classList.add('active');
 
   // HUD 초기화
@@ -1871,11 +1874,6 @@ function stopRunMode() {
 
   const kcal = Math.round(dist * 70 * 1.05);
 
-  document.getElementById('finishDist').textContent = dist.toFixed(2);
-  document.getElementById('finishTime').textContent = timeStr;
-  document.getElementById('finishPace').textContent = paceStr;
-  document.getElementById('finishKcal').textContent = kcal;
-
   // 완료 통계를 토스트로 표시하고 기록 자동 저장
   const minDur = Math.round(elapsed / 60);
   records.unshift({
@@ -1893,7 +1891,7 @@ function stopRunMode() {
   checkBadges();
 
   // HUD + 컨트롤 닫기
-  document.getElementById('runHudTop').classList.remove('active');
+  document.getElementById('navRunHud').classList.remove('active');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');
   if (runPolyline) { runPolyline.setMap(null); runPolyline = null; }
@@ -2004,7 +2002,7 @@ function injectRunPathToReport(path, dist) {
 // ── 완료 모달 닫기 ──
 function closeRunFinish() {
   // 완주 모달 제거됨
-  document.getElementById('runHudTop').classList.remove('active');
+  document.getElementById('navRunHud').classList.remove('active');
   document.getElementById('runControls').classList.remove('active');
   document.getElementById('runPausedBanner').classList.remove('show');
   runLinkedCourse = null;
