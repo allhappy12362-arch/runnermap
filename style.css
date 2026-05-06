@@ -1065,3 +1065,27 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   opacity: 1 !important;
   cursor: pointer !important;
 }
+
+/* nav 내 러닝 HUD */
+.nav-run-hud {
+  display: none;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  justify-content: center;
+}
+.nav-run-hud.active { display: flex; }
+.nav-hud-box {
+  display: flex; align-items: baseline; gap: 4px;
+  padding: 0 14px;
+}
+.nav-hud-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px; font-weight: 500;
+  color: var(--accent); line-height: 1;
+}
+.nav-hud-lbl {
+  font-size: 10px; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.nav-hud-div { width: 1px; height: 22px; background: rgba(255,255,255,0.12); flex-shrink: 0; }

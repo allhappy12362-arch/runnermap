@@ -17,6 +17,16 @@
   <div class="nav-logo">runner<span style="color:var(--accent);font-family:'DM Mono'">map</span>
     <span>내 주변 러닝 코스</span>
   </div>
+  <!-- 러닝 중 HUD (nav 중앙) -->
+  <div class="nav-run-hud" id="navRunHud">
+    <div class="nav-hud-box"><span class="nav-hud-val" id="runDist">0.00</span><span class="nav-hud-lbl">km</span></div>
+    <div class="nav-hud-div"></div>
+    <div class="nav-hud-box"><span class="nav-hud-val" id="runTime">00:00</span><span class="nav-hud-lbl">시간</span></div>
+    <div class="nav-hud-div"></div>
+    <div class="nav-hud-box"><span class="nav-hud-val" id="runPace">--'--"</span><span class="nav-hud-lbl">페이스</span></div>
+    <div class="nav-hud-div"></div>
+    <div class="nav-hud-box"><span class="nav-hud-val" id="runKcal">0</span><span class="nav-hud-lbl">kcal🔥</span></div>
+  </div>
   <div class="nav-actions">
     <button class="nav-btn nav-btn-run" onclick="startRunMode()">🏃 <span class="nav-btn-text">러닝 시작</span></button>
     <button class="nav-btn" onclick="openMyPage('saved')">♡ <span class="nav-btn-text">저장</span></button>
@@ -242,30 +252,6 @@
     <div class="mypage-tab" id="tabReports" onclick="switchMyTab('reports')">내 제보</div>
   </div>
   <div class="mypage-body" id="mypageBody"></div>
-</div>
-
-<!-- RUN MODE - 메인 지도 위 HUD (전체화면 아님) -->
-<!-- 상단 HUD - nav 바로 아래 -->
-<div class="run-hud-top" id="runHudTop">
-  <div class="run-stat-box">
-    <div class="run-stat-value" id="runDist">0.00</div>
-    <div class="run-stat-label">km</div>
-  </div>
-  <div class="run-stat-divider"></div>
-  <div class="run-stat-box">
-    <div class="run-stat-value" id="runTime">00:00</div>
-    <div class="run-stat-label">시간</div>
-  </div>
-  <div class="run-stat-divider"></div>
-  <div class="run-stat-box">
-    <div class="run-stat-value" id="runPace">--'--"</div>
-    <div class="run-stat-label">페이스/km</div>
-  </div>
-  <div class="run-stat-divider"></div>
-  <div class="run-stat-box">
-    <div class="run-stat-value" id="runKcal">0</div>
-    <div class="run-stat-label">kcal 🔥</div>
-  </div>
 </div>
 
 <!-- 일시정지 배너 -->
