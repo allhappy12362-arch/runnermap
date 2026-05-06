@@ -1922,7 +1922,127 @@ function stopRunMode() {
   if (runLocOverlay) { runLocOverlay.setMap(null); runLocOverlay = null; }
   runLinkedCourse = null;
 
-  showToast(`🎉 ${dist.toFixed(2)}km · ${timeStr} · ${kcal}kcal 저장됐어요!`);
+  showRunResult({ dist, timeStr, elapsed, kcal });
+}
+
+
+// ── 러닝 결과 화면 ──
+const QUOTES = [
+  "느려도 괜찮다 — 멈추지만 않으면 된다",
+  "오늘의 1km가 내일의 10km를 만든다",
+  "달리기는 몸이 아니라 마음이 먼저 포기한다",
+  "땀은 거짓말하지 않는다",
+  "지금 이 순간도 누군가는 달리고 있다",
+  "어제보다 오늘, 오늘보다 내일",
+];
+
+function showRunResult({ dist, timeStr, elapsed, kcal }) {
+  const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  const today = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' });
+
+  // 치킨 환산
+  const chickenHalf = 313;
+  const chickenLabel = kcal >= chickenHalf ? `치킨 ${Math.floor(kcal/chickenHalf)}마리 반` : `치킨 반 마리 가까이`;
+
+  // 한강 환산 (마포대교 왕복 약 5.4km)
+  const hangang = 5.4;
+  const hangangTimes = (dist / hangang).toFixed(1);
+  const hangangLabel = dist >= hangang ? `한강 다리 ${hangangTimes}번 건넌 거리` : `한강 다리 ${Math.round(dist/hangang*100)}% 건넌 거리`;
+
+  // 지방 환산 (지방 1g = 7.7kcal)
+  const fat = Math.round(kcal / 7.7);
+
+  // 페이스
+  let paceStr = '--'--"';
+  if (dist > 0.05 && elapsed > 5) {
+    const pm = Math.floor(elapsed / dist / 60);
+    const ps = Math.round((elapsed / dist) % 60);
+    paceStr = `${pm}'${String(ps).padStart(2,'0')}"`;
+  }
+
+  // 뱃지
+  const totalRuns = records.length;
+  const totalDist = records.reduce((s, r) => s + (parseFloat(r.memo) || 0), 0);
+  const badges = [];
+  if (dist >= 5 && records.filter(r => parseFloat(r.memo) >= 5).length === 1) badges.push({ text: '🏅 5km 첫 돌파', isNew: true });
+  if (dist >= 10 && records.filter(r => parseFloat(r.memo) >= 10).length === 1) badges.push({ text: '🏅 10km 첫 돌파', isNew: true });
+  // 연속 뱃지
+  const streak = getStreak();
+  if (streak >= 3) badges.push({ text: `🔥 ${streak}일 연속`, isNew: streak === 3 });
+  badges.push({ text: `총 ${totalRuns}회`, isNew: false });
+  badges.push({ text: `누적 ${totalDist.toFixed(1)}km`, isNew: false });
+
+  const badgeHTML = badges.map(b =>
+    `<div class="result-badge${b.isNew ? ' new' : ''}">${b.text}</div>`
+  ).join('');
+
+  const html = `
+<div class="run-result-overlay" id="runResultOverlay">
+  <div class="run-result-sheet">
+    <div class="rr-header">
+      <div class="rr-date">${today}</div>
+      <div class="rr-quote">"${quote}"</div>
+      <div class="rr-sub">오늘도 해냈어요 🎉</div>
+    </div>
+    <div class="rr-stats">
+      <div class="rr-stat"><div class="rr-val">${dist.toFixed(2)}</div><div class="rr-unit">km</div><div class="rr-lbl">거리</div></div>
+      <div class="rr-stat"><div class="rr-val">${timeStr}</div><div class="rr-unit"></div><div class="rr-lbl">시간</div></div>
+      <div class="rr-stat"><div class="rr-val">${paceStr}</div><div class="rr-unit">분/km</div><div class="rr-lbl">페이스</div></div>
+      <div class="rr-stat"><div class="rr-val">${kcal}</div><div class="rr-unit">kcal</div><div class="rr-lbl">칼로리</div></div>
+    </div>
+    <div class="rr-divider"></div>
+    <div class="rr-earned">
+      <div class="rr-earn-card">
+        <div class="rr-earn-icon">🍗</div>
+        <div class="rr-earn-text">
+          <strong>${chickenLabel} 태웠어요</strong>
+          <span class="rr-num">${kcal}kcal</span> 소모 — 오늘 치킨 먹어도 돼요
+        </div>
+      </div>
+      <div class="rr-earn-card">
+        <div class="rr-earn-icon">🌉</div>
+        <div class="rr-earn-text">
+          <strong>${hangangLabel}</strong>
+          <span class="rr-num">${dist.toFixed(2)}km</span> — 두 발로 완주했어요
+        </div>
+      </div>
+      <div class="rr-earn-card">
+        <div class="rr-earn-icon">🔥</div>
+        <div class="rr-earn-text">
+          <strong>지방 ${fat}g 녹였어요</strong>
+          <span class="rr-num">${elapsed < 3600 ? Math.floor(elapsed/60)+'분' : timeStr}</span> 동안 몸이 확실히 바뀌고 있어요
+        </div>
+      </div>
+    </div>
+    <div class="rr-divider"></div>
+    <div class="rr-badges">${badgeHTML}</div>
+    <div class="rr-footer">
+      <button class="rr-btn" onclick="closeRunResult()">닫기</button>
+      <button class="rr-btn primary" onclick="closeRunResult()">저장 완료 ✓</button>
+    </div>
+  </div>
+</div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function getStreak() {
+  if (!records.length) return 1;
+  const dates = records.map(r => r.date).sort((a,b) => b.localeCompare(a));
+  let streak = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = new Date(dates[i-1]);
+    const curr = new Date(dates[i]);
+    const diff = (prev - curr) / 86400000;
+    if (diff === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function closeRunResult() {
+  const el = document.getElementById('runResultOverlay');
+  if (el) el.remove();
 }
 
 // ── 기록만 저장 ──
