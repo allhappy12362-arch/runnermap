@@ -1121,152 +1121,36 @@ let reportDotOverlays = [];
 let reportOsrmPath = [];
 let reportMultiSelected = new Set(); // 분위기+편의시설 복수선택
 
-function openReportModal() {
+function openReportModal(withForm = false) {
   document.getElementById('reportOverlay').classList.add('open');
-  // 카카오맵 로드된 후 제보 지도 초기화 — 시트 애니메이션(0.25s) 후 실행
-  setTimeout(() => initReportMap(), 350);
-}
-
-function initReportMap() {
-  if (!kakaoReady()) {
-    // 카카오 SDK 아직 로드 안 됐으면 재시도
-    setTimeout(() => initReportMap(), 500);
-    return;
-  }
-
-  const container = document.getElementById('reportMap');
-  if (!container) return;
-
-  // 이미 지도 있으면 relayout만 호출 (크기 재계산)
-  if (reportMap) {
-    kakao.maps.event.trigger(reportMap, 'resize');
-    return;
-  }
-
-  const center = kakaoMap
-    ? kakaoMap.getCenter()
-    : new kakao.maps.LatLng(37.5326, 127.0246);
-
-  reportMap = new kakao.maps.Map(container, {
-    center,
-    level: 5,
-    mapTypeId: kakao.maps.MapTypeId.ROADMAP
-  });
-
-  // 지도 클릭 → 웨이포인트 추가
-  kakao.maps.event.addListener(reportMap, 'click', e => {
-    const lat = e.latLng.getLat();
-    const lng = e.latLng.getLng();
-    addReportWaypoint(lat, lng);
-  });
-}
-
-function addReportWaypoint(lat, lng) {
-  reportWaypoints.push([lat, lng]);
-  const idx = reportWaypoints.length;
-
-  // 점 오버레이 (번호 표시)
-  const isFirst = idx === 1;
-  const dotContent = `<div style="
-    width:22px;height:22px;border-radius:50%;
-    background:${isFirst ? '#c8ff00' : '#fff'};
-    border:2px solid #0d0d0d;
-    font-size:10px;font-weight:700;color:#0d0d0d;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 1px 6px rgba(0,0,0,0.5);
-    font-family:'DM Mono',monospace;
-  ">${idx}</div>`;
-
-  const dot = new kakao.maps.CustomOverlay({
-    position: new kakao.maps.LatLng(lat, lng),
-    content: dotContent,
-    yAnchor: 0.5, xAnchor: 0.5, zIndex: 5
-  });
-  dot.setMap(reportMap);
-  reportDotOverlays.push(dot);
-
-  // 힌트 텍스트 업데이트
-  const hint = document.getElementById('reportMapHint');
-  if (idx === 1) hint.textContent = '계속 탭해서 경유점을 추가하세요';
-  else if (idx >= 2) hint.textContent = `${idx}개 경유점 · 탭해서 추가`;
-
-  // 2점 이상이면 OSRM 경로 그리기
-  if (reportWaypoints.length >= 2) drawReportRoute();
-}
-
-async function drawReportRoute() {
-  if (reportWaypoints.length < 2) return;
-
-  // 기존 polyline 제거
-  if (reportPolyline) { reportPolyline.setMap(null); reportPolyline = null; }
-
-  try {
-    const coords = reportWaypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
-    const res = await fetch(
-      `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`
-    );
-    const data = await res.json();
-    if (data.code !== 'Ok' || !data.routes?.length) throw new Error('경로 없음');
-
-    const geo = data.routes[0].geometry.coordinates;
-    reportOsrmPath = geo.map(([lng, lat]) => [lat, lng]); // 저장용 [lat,lng]
-    const linePath = geo.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
-
-    reportPolyline = new kakao.maps.Polyline({
-      map: reportMap,
-      path: linePath,
-      strokeWeight: 4,
-      strokeColor: '#c8ff00',
-      strokeOpacity: 0.9,
-      strokeStyle: 'solid'
-    });
-
-    // 거리 계산 (m → km)
-    const distM = data.routes[0].distance;
-    const km = (distM / 1000).toFixed(1);
-    document.getElementById('reportMapDist').textContent = km + ' km';
-    document.getElementById('rKm').value = km;
-
-    // 경로 전체 보이게
-    const bounds = new kakao.maps.LatLngBounds();
-    linePath.forEach(p => bounds.extend(p));
-    reportMap.setBounds(bounds, 30);
-
-  } catch(e) {
-    // 폴백: 직선 연결
-    const linePath = reportWaypoints.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
-    reportOsrmPath = [...reportWaypoints];
-    reportPolyline = new kakao.maps.Polyline({
-      map: reportMap, path: linePath,
-      strokeWeight: 4, strokeColor: '#c8ff00', strokeOpacity: 0.7
-    });
-  }
-}
-
-function reportMapUndo() {
-  if (!reportWaypoints.length) return;
-  reportWaypoints.pop();
-  const dot = reportDotOverlays.pop();
-  if (dot) dot.setMap(null);
-  if (reportPolyline) { reportPolyline.setMap(null); reportPolyline = null; }
-  reportOsrmPath = [];
-
-  const hint = document.getElementById('reportMapHint');
-  if (reportWaypoints.length === 0) {
-    hint.textContent = '지도를 탭해서 경유점을 찍어주세요';
-    document.getElementById('reportMapDist').textContent = '0.0 km';
-    document.getElementById('rKm').value = '';
-  } else if (reportWaypoints.length >= 2) {
-    hint.textContent = `${reportWaypoints.length}개 경유점`;
-    drawReportRoute();
+  const guide = document.getElementById('reportGuideSheet');
+  const form = document.getElementById('reportFormSheet');
+  if (withForm) {
+    if (guide) guide.style.display = 'none';
+    if (form) form.style.display = 'flex';
   } else {
-    hint.textContent = '계속 탭해서 경유점을 추가하세요';
-    document.getElementById('reportMapDist').textContent = '0.0 km';
+    if (guide) guide.style.display = 'flex';
+    if (form) form.style.display = 'none';
   }
 }
 
-function toggleReportMulti(btn) {
-  const key = btn.dataset.key;
+// 러닝 결과 카드에서 제보하기 버튼 클릭
+function openReportFromResult() {
+  closeRunResult();
+  openReportModal(true);
+  // GPS 경로 주입
+  if (runPath && runPath.length >= 2) {
+    reportWaypoints = [...runPath];
+    reportOsrmPath = [...runPath];
+    const km = runTotalDist.toFixed(1);
+    const kmInput = document.getElementById('rKm');
+    if (kmInput) kmInput.value = km;
+    showToast('GPS 경로가 자동 입력됐어요 📍');
+  }
+}
+
+function toggleReportMulti(btn, key) {
+  if (!key) key = btn.dataset.key;
   if (reportMultiSelected.has(key)) {
     reportMultiSelected.delete(key);
     btn.classList.remove('selected');
@@ -1278,14 +1162,9 @@ function toggleReportMulti(btn) {
 
 function reportMapReset() {
   reportWaypoints = [];
-  reportDotOverlays.forEach(d => d.setMap(null));
-  reportDotOverlays = [];
-  if (reportPolyline) { reportPolyline.setMap(null); reportPolyline = null; }
   reportOsrmPath = [];
-  document.getElementById('reportMapDist').textContent = '0.0 km';
-  document.getElementById('rKm').value = '';
-  document.getElementById('reportMapHint').textContent = '지도를 탭해서 경유점을 찍어주세요';
-  // reportMap 객체는 유지
+  const kmEl = document.getElementById('rKm');
+  if (kmEl) kmEl.value = '';
 }
 
 
@@ -1312,7 +1191,7 @@ async function submitReport() {
     showToast('* 표시 항목을 모두 입력해주세요!'); return;
   }
   if (reportWaypoints.length < 2) {
-    showToast('지도에 경로를 먼저 그려주세요! 🗺️'); return;
+    showToast('러닝 경로가 없어요. 러닝 후 다시 시도해주세요 🏃'); return;
   }
 
   const pathToSave = reportOsrmPath.length >= 2 ? reportOsrmPath : reportWaypoints;
@@ -2011,6 +1890,7 @@ function showRunResult({ dist, timeStr, elapsed, kcal }) {
     <div class="rr-badges">${badgeHTML}</div>
     <div class="rr-footer">
       <button class="rr-btn" onclick="closeRunResult()">닫기</button>
+      <button class="rr-btn report" onclick="openReportFromResult()">✏️ 코스 제보하기</button>
       <button class="rr-btn primary" onclick="closeRunResult()">저장 완료 ✓</button>
     </div>
   </div>
@@ -2063,77 +1943,10 @@ function saveRunAsRecord() {
   showToast('📋 기록이 저장됐어요!');
 }
 
-// ── 기록 + 코스 제보 ──
+// ── 기록 + 코스 제보 (레거시 — 결과카드에서 openReportFromResult() 사용) ──
 function saveRunAndReport() {
   closeRunFinish();
-
-  // 제보 폼에 경로 자동 주입
-  const path = runPath;
-  const dist = runTotalDist;
-
-  // 제보 모달 열기
-  openReportModal();
-
-  // 잠깐 기다렸다가 경로 주입 (지도 초기화 후)
-  setTimeout(() => {
-    injectRunPathToReport(path, dist);
-  }, 600);
-}
-
-function injectRunPathToReport(path, dist) {
-  if (!reportMap || path.length < 2) return;
-
-  // 기존 내용 초기화
-  reportMapReset();
-
-  // 경로 점 주입
-  path.forEach(([lat, lng]) => {
-    reportWaypoints.push([lat, lng]);
-    const idx = reportWaypoints.length;
-    const dotContent = `<div style="
-      width:18px;height:18px;border-radius:50%;
-      background:${idx===1?'#c8ff00':'rgba(200,255,0,0.5)'};
-      border:2px solid #0d0d0d;font-size:9px;font-weight:700;color:#0d0d0d;
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 1px 4px rgba(0,0,0,0.4);
-    ">${idx<=9?idx:'·'}</div>`;
-    const dot = new kakao.maps.CustomOverlay({
-      position: new kakao.maps.LatLng(lat, lng),
-      content: dotContent,
-      yAnchor: 0.5, xAnchor: 0.5, zIndex: 5
-    });
-    dot.setMap(reportMap);
-    reportDotOverlays.push(dot);
-  });
-
-  // 경로 직접 그리기 (OSRM 대신 실제 GPS 경로 사용)
-  const linePath = path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
-  reportOsrmPath = path;
-
-  if (reportPolyline) reportPolyline.setMap(null);
-  reportPolyline = new kakao.maps.Polyline({
-    map: reportMap,
-    path: linePath,
-    strokeWeight: 4,
-    strokeColor: '#c8ff00',
-    strokeOpacity: 0.9,
-    strokeStyle: 'solid'
-  });
-
-  // 거리 표시
-  const km = dist.toFixed(1);
-  document.getElementById('reportMapDist').textContent = km + ' km';
-  document.getElementById('rKm').value = km;
-
-  // 힌트 업데이트
-  document.getElementById('reportMapHint').textContent = `GPS 경로 자동 입력됨 (${path.length}점)`;
-
-  // 경로 전체 보이게
-  const bounds = new kakao.maps.LatLngBounds();
-  linePath.forEach(p => bounds.extend(p));
-  reportMap.setBounds(bounds, 30);
-
-  showToast('GPS 경로가 제보 폼에 자동 입력됐어요 📍');
+  openReportFromResult();
 }
 
 // ── 완료 모달 닫기 ──

@@ -160,7 +160,8 @@
       <div class="report-title">코스 제보하기</div>
       <button class="report-close" onclick="closeReportModal()">✕</button>
     </div>
-    <div class="report-guide-sheet">
+    <!-- 안내 화면 (러닝 전) -->
+    <div class="report-guide-sheet" id="reportGuideSheet">
       <div class="report-guide-icon">🏃</div>
       <div class="report-guide-title">직접 뛴 경로로 제보해요</div>
       <div class="report-guide-desc">
@@ -169,6 +170,50 @@
       </div>
       <button class="report-guide-btn" onclick="closeReportModal(); startRunMode();">🏃 러닝 시작하기</button>
       <div style="font-size:12px;color:var(--text3)">러닝 완료 후 결과 화면에서 바로 제보할 수 있어요</div>
+    </div>
+    <!-- 제보 폼 (러닝 완료 후) -->
+    <div class="report-form-sheet" id="reportFormSheet" style="display:none">
+      <div class="report-gps-banner">
+        <span class="report-gps-dot"></span>
+        <span id="reportGpsBannerText">GPS 경로 자동 입력됨</span>
+      </div>
+      <div class="report-form-fields">
+        <div class="report-field-group">
+          <label class="report-field-label">코스 이름 <span class="req">*</span></label>
+          <input type="text" class="report-field-input" id="rName" placeholder="예: 한강 반포 야경 코스">
+        </div>
+        <div class="report-field-group">
+          <label class="report-field-label">거리 (km) <span class="req">*</span></label>
+          <input type="number" class="report-field-input" id="rKm" placeholder="예: 5.2" step="0.1" min="0.1">
+        </div>
+        <div class="report-field-group">
+          <label class="report-field-label">코스 유형 <span class="req">*</span></label>
+          <div class="report-type-grid">
+            <button class="report-type-btn" onclick="selectReportType(this,'강변')">🌊 강변</button>
+            <button class="report-type-btn" onclick="selectReportType(this,'공원')">🌿 공원</button>
+            <button class="report-type-btn" onclick="selectReportType(this,'도심')">🏙️ 도심</button>
+            <button class="report-type-btn" onclick="selectReportType(this,'산길')">⛰️ 산길</button>
+          </div>
+        </div>
+        <div class="report-field-group">
+          <label class="report-field-label">분위기 / 편의시설 <span class="report-opt">(복수선택 가능)</span></label>
+          <div class="report-multi-grid">
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'scenic')">🌅 경치</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'quiet')">🤫 조용함</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'night')">🌙 야간가능</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'flat')">⬛ 평지</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'toilet')">🚻 화장실</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'water')">💧 음수대</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'light')">💡 조명</button>
+            <button class="report-multi-btn" onclick="toggleReportMulti(this,'bench')">🪑 벤치</button>
+          </div>
+        </div>
+        <div class="report-field-group">
+          <label class="report-field-label">코스 소개 <span class="req">*</span></label>
+          <textarea class="report-field-input report-field-textarea" id="rDesc" placeholder="이 코스만의 매력을 알려주세요"></textarea>
+        </div>
+      </div>
+      <button class="report-submit-btn" onclick="submitReport()">📍 제보 등록하기</button>
     </div>
   </div>
 </div>
