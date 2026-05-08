@@ -171,13 +171,6 @@
         GPS로 뛴 경로가 자동으로 등록되니까<br>
         뛰고 나서 버튼 한 번만 누르면 돼요 📍
       </div>
-      <div class="report-guide-stats">
-        <div class="report-guide-stat"><span class="rg-num">직접 뛴</span><span class="rg-lbl">경로만 등록</span></div>
-        <div class="report-guide-stat-div"></div>
-        <div class="report-guide-stat"><span class="rg-num">GPS</span><span class="rg-lbl">자동 입력</span></div>
-        <div class="report-guide-stat-div"></div>
-        <div class="report-guide-stat"><span class="rg-num">검토 후</span><span class="rg-lbl">지도에 추가</span></div>
-      </div>
       <button class="report-guide-btn" onclick="closeReportModal(); startRunMode();">🏃 지금 바로 뛰러 가기</button>
       <div style="font-size:12px;color:var(--text3)">러닝 완료 후 결과 화면에서 바로 제보할 수 있어요</div>
     </div>
@@ -267,25 +260,34 @@
       <span>화면을 꺼도 기록은 계속돼요<br><small>브라우저를 완전히 종료하면 기록이 멈춰요</small></span>
     </div>
   </div>
-  <!-- 성별 선택 -->
+  <!-- 성별 + 몸무게 선택 -->
   <div class="run-gender-section">
     <div class="run-gender-label">칼로리 계산을 위해 알려주세요</div>
     <div class="run-gender-row">
       <button class="run-gender-btn" id="genderMale" onclick="selectRunGender('male')">
         <span class="run-gender-icon">♂</span>
         <span class="run-gender-name">남성</span>
-        <span class="run-gender-sub">평균 73.7kg</span>
       </button>
       <button class="run-gender-btn" id="genderFemale" onclick="selectRunGender('female')">
         <span class="run-gender-icon">♀</span>
         <span class="run-gender-name">여성</span>
-        <span class="run-gender-sub">평균 58.4kg</span>
       </button>
       <button class="run-gender-btn selected" id="genderSkip" onclick="selectRunGender('skip')">
         <span class="run-gender-icon">🏃</span>
         <span class="run-gender-name">그냥 뛸게요</span>
-        <span class="run-gender-sub">평균값 적용</span>
+        <span class="run-gender-sub" id="genderSkipSub">남·녀 평균 66.0kg</span>
       </button>
+    </div>
+    <!-- 몸무게 입력 (남/녀 선택 시 표시) -->
+    <div class="run-weight-row" id="runWeightRow">
+      <label class="run-weight-label">몸무게</label>
+      <div class="run-weight-input-wrap">
+        <input type="number" class="run-weight-input" id="runWeightInput"
+          placeholder="kg" min="30" max="200" step="0.1"
+          oninput="onWeightInput(this.value)">
+        <span class="run-weight-unit">kg</span>
+      </div>
+      <span class="run-weight-hint" id="runWeightHint"></span>
     </div>
   </div>
   <div class="run-ready-map-hint" id="runReadyMapHint">GPS로 내 위치를 잡은 뒤 바로 시작돼요</div>

@@ -1471,15 +1471,45 @@ let runWakeLock = null;
 // ── 성별 선택 ──
 function selectRunGender(gender) {
   runGender = gender;
-  if (gender === 'male')   runUserWeight = 73.7;
-  else if (gender === 'female') runUserWeight = 58.4;
-  else runUserWeight = 66.0;
+  const defaults = { male: 73.7, female: 58.4, skip: 66.0 };
+  runUserWeight = defaults[gender];
 
   ['genderMale','genderFemale','genderSkip'].forEach(id => {
     document.getElementById(id).classList.remove('selected');
   });
   const map = { male:'genderMale', female:'genderFemale', skip:'genderSkip' };
   document.getElementById(map[gender]).classList.add('selected');
+
+  const weightRow = document.getElementById('runWeightRow');
+  const weightInput = document.getElementById('runWeightInput');
+  const weightHint = document.getElementById('runWeightHint');
+
+  if (gender === 'skip') {
+    // 그냥 뛸게요: 입력 숨기고 평균값 표시
+    if (weightRow) weightRow.style.display = 'none';
+    if (weightInput) weightInput.value = '';
+  } else {
+    // 남/녀: 몸무게 입력 표시, 기본값 플레이스홀더로
+    if (weightRow) weightRow.style.display = 'flex';
+    if (weightInput) {
+      weightInput.placeholder = gender === 'male' ? '예: 73.7' : '예: 58.4';
+      weightInput.value = '';
+    }
+    if (weightHint) weightHint.textContent = `미입력 시 ${defaults[gender]}kg 적용`;
+  }
+}
+
+function onWeightInput(val) {
+  const n = parseFloat(val);
+  const hint = document.getElementById('runWeightHint');
+  const defaults = { male: 73.7, female: 58.4 };
+  if (n >= 30 && n <= 200) {
+    runUserWeight = n;
+    if (hint) hint.textContent = '';
+  } else {
+    runUserWeight = defaults[runGender] || 66.0;
+    if (hint) hint.textContent = `미입력 시 ${runUserWeight}kg 적용`;
+  }
 }
 
 // ── 러닝 모드 시작 (준비화면) ──

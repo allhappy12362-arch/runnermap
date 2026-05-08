@@ -692,14 +692,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 /* 제보 모달 */
 .report-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-  z-index: 200; display: none; align-items: flex-end; justify-content: center;
+  z-index: 200; display: none; align-items: center; justify-content: center;
+  padding: 20px;
 }
 .report-overlay.open { display: flex; }
 .report-sheet {
-  background: var(--bg2); border-radius: 20px 20px 0 0;
-  width: 100%; max-width: 480px; max-height: 92vh;
-  overflow-y: auto; padding: 20px 20px 48px;
-  animation: slideUp 0.25s ease;
+  background: var(--bg2); border-radius: 20px;
+  width: 100%; max-width: 440px; max-height: 85vh;
+  overflow-y: auto; padding: 20px 20px 32px;
+  animation: fadeScaleIn 0.22s ease;
 }
 .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .report-title { font-size: 18px; font-weight: 700; }
@@ -852,14 +853,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 /* 제보 모달 */
 .report-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-  z-index: 200; display: none; align-items: flex-end; justify-content: center;
+  z-index: 200; display: none; align-items: center; justify-content: center;
+  padding: 20px;
 }
 .report-overlay.open { display: flex; }
 .report-sheet {
-  background: var(--bg2); border-radius: 20px 20px 0 0;
-  width: 100%; max-width: 480px; max-height: 92vh;
-  overflow-y: auto; padding: 20px 20px 40px;
-  animation: slideUp 0.25s ease;
+  background: var(--bg2); border-radius: 20px;
+  width: 100%; max-width: 440px; max-height: 85vh;
+  overflow-y: auto; padding: 20px 20px 32px;
+  animation: fadeScaleIn 0.22s ease;
 }
 .report-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .report-title { font-size: 18px; font-weight: 700; }
@@ -975,20 +977,21 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 /* 준비 바텀시트 */
 .run-ready-backdrop {
   position: fixed; inset: 0; z-index: 290;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.55);
   display: none;
 }
-.run-ready-backdrop.show { display: block; }
+.run-ready-backdrop.show { display: flex; align-items: center; justify-content: center; }
 .run-ready-sheet {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
-  background: var(--bg2); border-radius: 20px 20px 0 0;
-  padding: 12px 24px 32px;
-  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  position: fixed; top: 50%; left: 50%; z-index: 300;
+  background: var(--bg2); border-radius: 20px;
+  width: calc(100% - 40px); max-width: 380px;
+  padding: 20px 20px 24px;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  transform: translateY(100%);
-  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+  transform: translate(-50%, -50%) scale(0.92);
+  opacity: 0; pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease;
 }
-.run-ready-sheet.show { transform: translateY(0); }
+.run-ready-sheet.show { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
 .run-ready-handle {
   width: 36px; height: 4px; border-radius: 2px;
   background: var(--border2); margin-bottom: 4px; flex-shrink: 0;
@@ -1108,6 +1111,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 }
 .run-finish-btn-discard:hover { color: #ff6060; }
 
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
@@ -1218,16 +1225,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 /* ── 러닝 성별 선택 ── */
 .run-gender-section {
-  padding: 4px 0 8px;
+  width: 100%; display: flex; flex-direction: column; gap: 10px;
 }
 .run-gender-label {
-  font-size: 12px; color: var(--text3); margin-bottom: 10px; text-align: center;
+  font-size: 12px; color: var(--text3); text-align: center;
 }
 .run-gender-row {
-  display: flex; gap: 8px;
+  display: flex; gap: 8px; width: 100%;
 }
 .run-gender-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 12px 6px; border-radius: var(--radius-sm);
   background: var(--bg3); border: 1.5px solid var(--border2);
   color: var(--text2); cursor: pointer; transition: all 0.15s;
@@ -1238,6 +1245,24 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
 }
 .run-gender-btn.selected .run-gender-sub { color: var(--accent); opacity: 0.8; }
-.run-gender-icon { font-size: 22px; line-height: 1; }
-.run-gender-name { font-size: 13px; font-weight: 700; }
+.run-gender-icon { font-size: 20px; line-height: 1; }
+.run-gender-name { font-size: 12px; font-weight: 700; }
 .run-gender-sub { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+/* 몸무게 입력 */
+.run-weight-row {
+  display: none; align-items: center; gap: 10px;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  width: 100%; box-sizing: border-box;
+}
+.run-weight-label { font-size: 12px; color: var(--text3); font-weight: 600; flex-shrink: 0; }
+.run-weight-input-wrap { display: flex; align-items: center; gap: 4px; }
+.run-weight-input {
+  width: 72px; background: var(--bg4); border: 0.5px solid var(--border2);
+  border-radius: 8px; padding: 6px 8px; color: var(--text);
+  font-size: 15px; font-family: 'DM Mono', monospace; font-weight: 500;
+  outline: none; text-align: center;
+}
+.run-weight-input:focus { border-color: var(--accent); }
+.run-weight-unit { font-size: 13px; color: var(--text3); }
+.run-weight-hint { font-size: 11px; color: var(--text3); margin-left: auto; }
