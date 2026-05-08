@@ -162,13 +162,23 @@
     </div>
     <!-- 안내 화면 (러닝 전) -->
     <div class="report-guide-sheet" id="reportGuideSheet">
-      <div class="report-guide-icon">🏃</div>
-      <div class="report-guide-title">직접 뛴 경로로 제보해요</div>
+      <div class="report-guide-icon">🗺️</div>
+      <div class="report-guide-title">내가 발견한 코스를<br>러너들과 나눠요</div>
       <div class="report-guide-desc">
-        러너맵은 실제 러닝으로 기록된 경로만<br>코스로 등록할 수 있어요.<br><br>
-        안전하고 정확한 코스 정보를 위해<br>GPS로 뛴 경로를 기반으로 제보돼요 📍
+        매일 뛰는 그 길, 사실 엄청난 코스일 수 있어요.<br>
+        당신만 아는 야경 명소, 조용한 공원 산책로,<br>
+        숨겨진 한강 뷰 포인트—<br><br>
+        GPS로 뛴 경로가 자동으로 등록되니까<br>
+        뛰고 나서 버튼 한 번만 누르면 돼요 📍
       </div>
-      <button class="report-guide-btn" onclick="closeReportModal(); startRunMode();">🏃 러닝 시작하기</button>
+      <div class="report-guide-stats">
+        <div class="report-guide-stat"><span class="rg-num">직접 뛴</span><span class="rg-lbl">경로만 등록</span></div>
+        <div class="report-guide-stat-div"></div>
+        <div class="report-guide-stat"><span class="rg-num">GPS</span><span class="rg-lbl">자동 입력</span></div>
+        <div class="report-guide-stat-div"></div>
+        <div class="report-guide-stat"><span class="rg-num">검토 후</span><span class="rg-lbl">지도에 추가</span></div>
+      </div>
+      <button class="report-guide-btn" onclick="closeReportModal(); startRunMode();">🏃 지금 바로 뛰러 가기</button>
       <div style="font-size:12px;color:var(--text3)">러닝 완료 후 결과 화면에서 바로 제보할 수 있어요</div>
     </div>
     <!-- 제보 폼 (러닝 완료 후) -->
@@ -255,6 +265,27 @@
     <div class="run-ready-notice">
       <span class="run-notice-icon">📱</span>
       <span>화면을 꺼도 기록은 계속돼요<br><small>브라우저를 완전히 종료하면 기록이 멈춰요</small></span>
+    </div>
+  </div>
+  <!-- 성별 선택 -->
+  <div class="run-gender-section">
+    <div class="run-gender-label">칼로리 계산을 위해 알려주세요</div>
+    <div class="run-gender-row">
+      <button class="run-gender-btn" id="genderMale" onclick="selectRunGender('male')">
+        <span class="run-gender-icon">♂</span>
+        <span class="run-gender-name">남성</span>
+        <span class="run-gender-sub">평균 73.7kg</span>
+      </button>
+      <button class="run-gender-btn" id="genderFemale" onclick="selectRunGender('female')">
+        <span class="run-gender-icon">♀</span>
+        <span class="run-gender-name">여성</span>
+        <span class="run-gender-sub">평균 58.4kg</span>
+      </button>
+      <button class="run-gender-btn selected" id="genderSkip" onclick="selectRunGender('skip')">
+        <span class="run-gender-icon">🏃</span>
+        <span class="run-gender-name">그냥 뛸게요</span>
+        <span class="run-gender-sub">평균값 적용</span>
+      </button>
     </div>
   </div>
   <div class="run-ready-map-hint" id="runReadyMapHint">GPS로 내 위치를 잡은 뒤 바로 시작돼요</div>

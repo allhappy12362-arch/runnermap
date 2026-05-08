@@ -841,7 +841,7 @@ function calcPace(km) {
   // ── 칼로리 계산: 거리 기반 공식 + 페이스 강도 보정 ──
   // 기본: 체중 × 거리 × 1.036 (널리 검증된 러닝 칼로리 공식)
   // 강도 보정: 빠를수록 산소소비량 증가 → 최대 15% 추가
-  const weight = 65;
+  const weight = runUserWeight || 66.0;
   const baseKcal = weight * km * 1.036;
   const speedKmh = 60 / (paceMin + paceSec / 60);
   // 속도 6km/h(10분페이스)~16km/h(3분45초페이스) 기준 0~15% 보정
@@ -1136,15 +1136,16 @@ function openReportModal(withForm = false) {
 
 // 러닝 결과 카드에서 제보하기 버튼 클릭
 function openReportFromResult() {
-  closeRunResult();
+  // runPath/runTotalDist를 closeRunResult 전에 먼저 캡처
+  const path = runPath ? [...runPath] : [];
+  const km = runTotalDist;
+  closeRunResult(); // 이 시점에 runPath=[], runTotalDist=0 됨
   openReportModal(true);
-  // GPS 경로 주입
-  if (runPath && runPath.length >= 2) {
-    reportWaypoints = [...runPath];
-    reportOsrmPath = [...runPath];
-    const km = runTotalDist.toFixed(1);
+  if (path.length >= 2) {
+    reportWaypoints = path;
+    reportOsrmPath = path;
     const kmInput = document.getElementById('rKm');
-    if (kmInput) kmInput.value = km;
+    if (kmInput) kmInput.value = km.toFixed(1);
     showToast('GPS 경로가 자동 입력됐어요 📍');
   }
 }
@@ -1172,7 +1173,16 @@ function closeReportModal() {
   document.getElementById('reportOverlay').classList.remove('open');
   reportMapReset();
   reportMultiSelected.clear();
+  selectedReportType = '';
   document.querySelectorAll('.report-multi-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.report-type-btn').forEach(b => b.classList.remove('selected'));
+  // 폼 필드 초기화
+  ['rName','rKm','rDesc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  // 가이드 화면으로 복귀
+  const guide = document.getElementById('reportGuideSheet');
+  const form = document.getElementById('reportFormSheet');
+  if (guide) guide.style.display = 'flex';
+  if (form) form.style.display = 'none';
 }
 function closeReportOnBg(e) {
   if (e.target === document.getElementById('reportOverlay')) closeReportModal();
@@ -1453,7 +1463,24 @@ let runTimerInterval = null;
 let runTotalDist = 0;       // km
 let runIsPaused = false;
 let runIsActive = false;
+// 대한민국 평균 체중 (2023 국민건강통계): 남 73.7kg / 여 58.4kg / 평균 66.0kg
+let runUserWeight = 66.0; // 기본값: 평균
+let runGender = 'skip';
 let runWakeLock = null;
+
+// ── 성별 선택 ──
+function selectRunGender(gender) {
+  runGender = gender;
+  if (gender === 'male')   runUserWeight = 73.7;
+  else if (gender === 'female') runUserWeight = 58.4;
+  else runUserWeight = 66.0;
+
+  ['genderMale','genderFemale','genderSkip'].forEach(id => {
+    document.getElementById(id).classList.remove('selected');
+  });
+  const map = { male:'genderMale', female:'genderFemale', skip:'genderSkip' };
+  document.getElementById(map[gender]).classList.add('selected');
+}
 
 // ── 러닝 모드 시작 (준비화면) ──
 function startRunMode() {
@@ -1697,7 +1724,7 @@ function updateRunHUD() {
 
     // 실시간 칼로리: 거리 기반 + 속도 강도 보정 (체중 65kg)
     const speedKmh = runTotalDist / (elapsed / 3600);
-    const baseKcal = 65 * runTotalDist * 1.036;
+    const baseKcal = runUserWeight * runTotalDist * 1.036;
     const intensityBonus = Math.min(0.15, Math.max(0, (speedKmh - 6) / 10 * 0.15));
     const kcal = Math.round(baseKcal * (1 + intensityBonus));
     document.getElementById('runKcal').textContent = kcal;
@@ -1750,16 +1777,12 @@ function stopRunMode() {
     runWatchId = null;
   }
 
-  runPath = [];
-  runStartTime = null;
-  runPauseTime = 0;
-  runPauseStart = null;
-
   releaseWakeLock();
 
-  // 완료 통계 계산
+  // 완료 통계 계산 (runPath 초기화 전에 먼저 계산)
   const elapsed = getRunElapsedSec();
   const dist = runTotalDist;
+  const savedPath = [...runPath]; // 제보용 경로 보존
 
   const h = Math.floor(elapsed / 3600);
   const m = Math.floor((elapsed % 3600) / 60);
@@ -1775,7 +1798,15 @@ function stopRunMode() {
     paceStr = `${pm}'${String(ps).padStart(2,'0')}"`;
   }
 
-  const kcal = Math.round(dist * 70 * 1.05);
+  // 칼로리: 성별 선택된 runUserWeight 적용
+  const speedKmh = elapsed > 0 ? dist / (elapsed / 3600) : 0;
+  const intensityBonus = Math.min(0.15, Math.max(0, (speedKmh - 6) / 10 * 0.15));
+  const kcal = Math.round(runUserWeight * dist * 1.036 * (1 + intensityBonus));
+
+  runPath = savedPath; // 경로 복원 (제보용)
+  runStartTime = null;
+  runPauseTime = 0;
+  runPauseStart = null;
 
   // 완료 통계를 토스트로 표시하고 기록 자동 저장
   const minDur = Math.round(elapsed / 60);
@@ -1916,6 +1947,9 @@ function getStreak() {
 function closeRunResult() {
   const el = document.getElementById('runResultOverlay');
   if (el) el.remove();
+  // 결과 확인 후 상태 정리
+  runTotalDist = 0;
+  runPath = [];
 }
 
 // ── 기록만 저장 ──
