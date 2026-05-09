@@ -30,7 +30,7 @@
   </div>
   <div class="nav-actions">
     <button class="nav-btn nav-btn-run" onclick="startRunMode()">🏃 <span class="nav-btn-text">러닝 시작</span></button>
-    <button class="nav-btn" onclick="openMyPage('saved')">♡ <span class="nav-btn-text">저장</span></button>
+    <button class="nav-btn" onclick="openMusicModal()">🎵 <span class="nav-btn-text">음악</span></button>
     <button class="nav-btn" onclick="openMyPage('records')">📋 <span class="nav-btn-text">기록</span></button>
   </div>
 </nav>
@@ -153,6 +153,31 @@
   </div>
 </div>
 
+<!-- 음악 모달 -->
+<div class="music-overlay" id="musicOverlay" onclick="closeMusicOnBg(event)">
+  <div class="music-sheet">
+    <div class="music-header">
+      <div>
+        <div class="music-title">🎵 러너맵 음악</div>
+        <div class="music-subtitle">러너맵 사용자들이 추천한 러닝 음악이에요</div>
+      </div>
+      <button class="music-close" onclick="closeMusicModal()">✕</button>
+    </div>
+    <!-- 제보 입력 -->
+    <div class="music-report-box">
+      <div class="music-report-row">
+        <input type="text" class="music-input" id="musicTitle" placeholder="곡 제목">
+        <input type="text" class="music-input" id="musicArtist" placeholder="아티스트">
+      </div>
+      <button class="music-report-btn" onclick="submitMusic()">+ 제보하기</button>
+    </div>
+    <!-- 목록 -->
+    <div class="music-list" id="musicList">
+      <div class="music-loading">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
 <!-- REPORT MODAL -->
 <div class="report-overlay" id="reportOverlay" onclick="closeReportOnBg(event)">
   <div class="report-sheet">
@@ -216,6 +241,16 @@
         <div class="report-field-group">
           <label class="report-field-label">코스 소개 <span class="req">*</span></label>
           <textarea class="report-field-input report-field-textarea" id="rDesc" placeholder="이 코스만의 매력을 알려주세요"></textarea>
+        </div>
+        <div class="report-field-group">
+          <label class="report-field-label">🎵 이 코스에 어울리는 음악 <span class="report-opt">(선택, 여러 곡 가능)</span></label>
+          <div class="report-music-list" id="reportMusicList"></div>
+          <div class="report-music-input-row">
+            <input type="text" class="report-field-input report-music-input" id="rMusicInput"
+              placeholder="곡명 또는 아티스트 입력 후 + 추가"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addReportMusic()}">
+            <button class="report-music-add-btn" onclick="addReportMusic()">+</button>
+          </div>
         </div>
       </div>
       <button class="report-submit-btn" onclick="submitReport()">📍 제보 등록하기</button>

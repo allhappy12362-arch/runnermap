@@ -2179,3 +2179,84 @@ async function approveReport(id, report) {
     showToast('등록 실패. 다시 시도해주세요');
   }
 }
+
+// ══════════════════════════════════════
+// 🎵 음악 제보
+// ══════════════════════════════════════
+async function openMusicModal() {
+  document.getElementById('musicOverlay').classList.add('open');
+  loadMusicList();
+}
+function closeMusicModal() {
+  document.getElementById('musicOverlay').classList.remove('open');
+}
+function closeMusicOnBg(e) {
+  if (e.target === document.getElementById('musicOverlay')) closeMusicModal();
+}
+
+async function loadMusicList() {
+  const el = document.getElementById('musicList');
+  el.innerHTML = '<div class="music-loading">불러오는 중...</div>';
+  try {
+    const data = await sb.select('music', 'order=likes.desc&limit=50');
+    if (!data || data.length === 0) {
+      el.innerHTML = '<div class="music-empty">아직 제보된 음악이 없어요 🎵<br>첫 번째로 제보해보세요!</div>';
+      return;
+    }
+    el.innerHTML = data.map((m, i) => `
+      <div class="music-item">
+        <div class="music-rank">${i + 1}</div>
+        <div class="music-info">
+          <div class="music-name">${m.title}</div>
+          <div class="music-artist">${m.artist || '아티스트 미상'}</div>
+        </div>
+        <button class="music-like-btn ${m.liked ? 'liked' : ''}" onclick="toggleMusicLike('${m.id}', this)">
+          <span class="music-like-icon">♪</span>
+          <span class="music-like-count">${m.likes || 0}명 추천</span>
+        </button>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="music-empty">불러오기 실패. 잠시 후 다시 시도해주세요.</div>';
+  }
+}
+
+async function submitMusic() {
+  const title = document.getElementById('musicTitle').value.trim();
+  const artist = document.getElementById('musicArtist').value.trim();
+  if (!title) { showToast('곡 제목을 입력해주세요'); return; }
+  try {
+    await sb.insert('music', { title, artist: artist || null, likes: 1 });
+    document.getElementById('musicTitle').value = '';
+    document.getElementById('musicArtist').value = '';
+    showToast('🎵 음악이 제보됐어요!');
+    loadMusicList();
+  } catch(e) {
+    showToast('제보 실패. 다시 시도해주세요');
+  }
+}
+
+async function toggleMusicLike(id, btn) {
+  const countEl = btn.querySelector('.music-like-count');
+  const isLiked = btn.classList.contains('liked');
+  const delta = isLiked ? -1 : 1;
+  const current = parseInt(countEl.textContent) || 0;
+  const newCount = Math.max(0, current + delta);
+  btn.classList.toggle('liked', !isLiked);
+  countEl.textContent = `${newCount}명 추천`;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/music?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({ likes: newCount })
+    });
+  } catch(e) {
+    // 롤백
+    btn.classList.toggle('liked', isLiked);
+    countEl.textContent = `${current}명 추천`;
+  }
+}
