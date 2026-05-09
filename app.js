@@ -2214,7 +2214,7 @@ function renderMusicList(data) {
   el.innerHTML = filtered.map((m, i) => `
     <div class="music-item" id="mitem-${m.id}">
       <div class="music-rank">${i + 1}</div>
-      <div class="music-info">
+      <div class="music-info" onclick="copyMusicTitle('${m.title.replace(/'/g,"\'")} ${(m.artist||'').replace(/'/g,"\'")}', this)" style="cursor:pointer" title="탭하면 복사">
         <div class="music-name">${m.title}</div>
         <div class="music-artist-row">
           <span class="music-artist">${m.artist || '아티스트 미상'}</span>
@@ -2381,4 +2381,17 @@ async function toggleMusicLike(id, btn, currentLikes) {
     countEl.textContent = `${current}명 추천`;
     if (cached) cached.likes = current;
   }
+}
+
+function copyMusicTitle(text, el) {
+  navigator.clipboard.writeText(text).then(() => {
+    const name = el.querySelector('.music-name');
+    const orig = name.textContent;
+    name.textContent = '✓ 복사됐어요!';
+    name.style.color = 'var(--accent)';
+    setTimeout(() => {
+      name.textContent = orig;
+      name.style.color = '';
+    }, 1200);
+  }).catch(() => showToast('복사 실패'));
 }
