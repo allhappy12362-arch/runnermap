@@ -15,7 +15,7 @@
 <body>
 
 <nav class="nav">
-  <div class="nav-logo">runner<span style="color:var(--accent);font-family:'DM Mono'">map</span>
+  <div class="nav-logo" onclick="adminTap()" style="cursor:default;user-select:none">runner<span style="color:var(--accent);font-family:'DM Mono'">map</span>
     <span>내 주변 러닝 코스</span>
   </div>
   <!-- 러닝 중 HUD (nav 중앙) -->
@@ -300,6 +300,33 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 관리자 비밀번호 모달 -->
+<div class="admin-pw-overlay" id="adminPwOverlay" onclick="closeAdminPw(event)">
+  <div class="admin-pw-box">
+    <div class="admin-pw-title">🔐 운영자 모드</div>
+    <input type="password" class="admin-pw-input" id="adminPwInput"
+      placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')checkAdminPw()">
+    <div class="admin-pw-actions">
+      <button class="admin-pw-cancel" onclick="document.getElementById('adminPwOverlay').classList.remove('show')">취소</button>
+      <button class="admin-pw-confirm" onclick="checkAdminPw()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 관리자 대시보드 -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-header">
+    <div class="admin-title">⚙️ 운영자 대시보드</div>
+    <button class="admin-close" onclick="closeAdmin()">✕</button>
+  </div>
+  <div class="admin-tabs">
+    <div class="admin-tab active" id="adminTabPending" onclick="switchAdminTab('pending')">대기중 제보</div>
+    <div class="admin-tab" id="adminTabApproved" onclick="switchAdminTab('approved')">승인됨</div>
+    <div class="admin-tab" id="adminTabRejected" onclick="switchAdminTab('rejected')">반려됨</div>
+  </div>
+  <div class="admin-body" id="adminBody"></div>
+</div>
 
 <!-- ═══════════════════════════════════════
   카카오맵 SDK

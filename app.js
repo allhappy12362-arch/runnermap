@@ -2039,3 +2039,139 @@ function showToast(msg) {
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2800);
 }
+
+// ══════════════════════════════════════
+// 관리자 모드
+// ══════════════════════════════════════
+const ADMIN_PW = 'zhfldk9623!!';
+let adminTapCount = 0;
+let adminTapTimer = null;
+let adminLoggedIn = false;
+let adminCurrentTab = 'pending';
+
+function adminTap() {
+  adminTapCount++;
+  clearTimeout(adminTapTimer);
+  adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 1500);
+  if (adminTapCount >= 5) {
+    adminTapCount = 0;
+    document.getElementById('adminPwOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('adminPwInput').focus(), 100);
+  }
+}
+
+function checkAdminPw() {
+  const val = document.getElementById('adminPwInput').value;
+  if (val === ADMIN_PW) {
+    document.getElementById('adminPwOverlay').classList.remove('show');
+    document.getElementById('adminPwInput').value = '';
+    adminLoggedIn = true;
+    openAdmin();
+  } else {
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('adminPwInput').placeholder = '비밀번호가 틀렸어요';
+    setTimeout(() => document.getElementById('adminPwInput').placeholder = '비밀번호 입력', 1500);
+  }
+}
+
+function closeAdminPw(e) {
+  if (e.target === document.getElementById('adminPwOverlay')) {
+    document.getElementById('adminPwOverlay').classList.remove('show');
+    document.getElementById('adminPwInput').value = '';
+  }
+}
+
+function openAdmin() {
+  document.getElementById('adminOverlay').classList.add('show');
+  loadAdminTab('pending');
+}
+
+function closeAdmin() {
+  document.getElementById('adminOverlay').classList.remove('show');
+  adminLoggedIn = false;
+}
+
+function switchAdminTab(tab) {
+  adminCurrentTab = tab;
+  ['pending','approved','rejected'].forEach(t => {
+    document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1))
+      .classList.toggle('active', t === tab);
+  });
+  loadAdminTab(tab);
+}
+
+async function loadAdminTab(tab) {
+  const body = document.getElementById('adminBody');
+  body.innerHTML = '<div class="admin-loading">불러오는 중...</div>';
+  try {
+    const data = await sb.select('reports', `status=eq.${tab}&order=created_at.desc`);
+    if (!data || data.length === 0) {
+      body.innerHTML = `<div class="admin-empty">${tab === 'pending' ? '대기 중인 제보가 없어요' : tab === 'approved' ? '승인된 코스가 없어요' : '반려된 제보가 없어요'}</div>`;
+      return;
+    }
+    body.innerHTML = data.map(r => `
+      <div class="admin-card" id="adminCard-${r.id}">
+        <div class="admin-card-header">
+          <div class="admin-card-name">${r.name}</div>
+          <div class="admin-card-meta">${r.km}km · ${r.type || '-'} · ${(r.created_at||'').slice(0,10)}</div>
+        </div>
+        <div class="admin-card-desc">${r.description || ''}</div>
+        ${tab === 'pending' ? `
+        <div class="admin-card-actions">
+          <button class="admin-btn-reject" onclick="updateReportStatus('${r.id}', 'rejected')">✕ 반려</button>
+          <button class="admin-btn-approve" onclick="approveReport('${r.id}', ${JSON.stringify(r).replace(/"/g,'&quot;')})">✓ 승인 → 지도 등록</button>
+        </div>` : `
+        <div class="admin-card-status ${tab}">${tab === 'approved' ? '✓ 승인됨' : '✕ 반려됨'}</div>`}
+      </div>
+    `).join('');
+  } catch(e) {
+    body.innerHTML = '<div class="admin-empty">불러오기 실패. Supabase 연결을 확인해주세요.</div>';
+  }
+}
+
+async function updateReportStatus(id, status) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({ status })
+    });
+    const card = document.getElementById(`adminCard-${id}`);
+    if (card) card.remove();
+    showToast(status === 'approved' ? '✓ 승인됐어요!' : '반려했어요');
+  } catch(e) {
+    showToast('처리 실패. 다시 시도해주세요');
+  }
+}
+
+async function approveReport(id, report) {
+  try {
+    // reports 상태 승인으로 변경
+    await updateReportStatus(id, 'approved');
+    // courses 테이블에 추가
+    const path = report.path ? JSON.parse(report.path) : [];
+    const startLat = path.length > 0 ? path[0][0] : null;
+    const startLng = path.length > 0 ? path[0][1] : null;
+    await sb.insert('courses', {
+      name: report.name,
+      km: report.km,
+      type: report.type,
+      description: report.description,
+      lat: startLat,
+      lng: startLng,
+      path: report.path,
+      vibes: report.vibes,
+      facilities: report.facilities,
+      status: 'active'
+    });
+    showToast('🗺️ 지도에 등록됐어요!');
+    // 코스 목록 새로고침
+    loadCourses();
+  } catch(e) {
+    showToast('등록 실패. 다시 시도해주세요');
+  }
+}
