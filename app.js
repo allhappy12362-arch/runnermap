@@ -2210,7 +2210,7 @@ async function loadMusicList() {
           <div class="music-name">${m.title}</div>
           <div class="music-artist">${m.artist || '아티스트 미상'}</div>
         </div>
-        <button class="music-like-btn ${m.liked ? 'liked' : ''}" onclick="toggleMusicLike('${m.id}', this)">
+        <button class="music-like-btn" onclick="toggleMusicLike('${m.id}', this)">
           <span class="music-like-icon">♪</span>
           <span class="music-like-count">${m.likes || 0}명 추천</span>
         </button>
@@ -2238,12 +2238,14 @@ async function submitMusic() {
 
 async function toggleMusicLike(id, btn) {
   const countEl = btn.querySelector('.music-like-count');
-  const isLiked = btn.classList.contains('liked');
-  const delta = isLiked ? -1 : 1;
   const current = parseInt(countEl.textContent) || 0;
-  const newCount = Math.max(0, current + delta);
-  btn.classList.toggle('liked', !isLiked);
+  const newCount = current + 1;
+
+  // 즉시 UI 반영
   countEl.textContent = `${newCount}명 추천`;
+  btn.classList.add('liked');
+  setTimeout(() => btn.classList.remove('liked'), 400);
+
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/music?id=eq.${id}`, {
       method: 'PATCH',
@@ -2256,7 +2258,6 @@ async function toggleMusicLike(id, btn) {
     });
   } catch(e) {
     // 롤백
-    btn.classList.toggle('liked', isLiked);
     countEl.textContent = `${current}명 추천`;
   }
 }

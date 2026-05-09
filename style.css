@@ -1470,3 +1470,4 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   white-space: nowrap;
 }
 .music-like-btn.liked .music-like-count { color: var(--accent); }
+.music-like-btn:active { transform: scale(0.92); }
