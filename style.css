@@ -1191,14 +1191,16 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .run-result-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: rgba(0,0,0,0.7);
-  display: flex; align-items: flex-end; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
   animation: fadeIn 0.2s ease;
 }
 .run-result-sheet {
   background: var(--bg2);
-  border-radius: 20px 20px 0 0;
-  width: 100%; max-width: 480px;
-  max-height: 92vh; overflow-y: auto;
+  border-radius: 20px;
+  width: 100%; max-width: 420px;
+  max-height: 88vh; overflow-y: auto;
+  animation: fadeScaleIn 0.25s ease;
 }
 .rr-header { background: var(--bg); padding: 28px 20px 24px; text-align: center; border-radius: 20px 20px 0 0; }
 .rr-date { font-size: 11px; color: var(--text3); letter-spacing: 1px; margin-bottom: 6px; }

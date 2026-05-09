@@ -1197,9 +1197,13 @@ async function submitReport() {
   const km = parseFloat(document.getElementById('rKm').value);
   const description = document.getElementById('rDesc').value.trim();
 
-  if (!name || !km || !selectedReportType || !description) {
-    showToast('* 표시 항목을 모두 입력해주세요!'); return;
+  // 이름만 필수, 나머지는 기본값 처리
+  if (!name) {
+    showToast('코스 이름은 꼭 입력해주세요!'); return;
   }
+  const finalKm = km || (reportWaypoints.length >= 2 ? parseFloat((reportWaypoints.length * 0.01).toFixed(1)) : 0);
+  const finalType = selectedReportType || '기타';
+  const finalDesc = description || '직접 뛴 경로로 제보된 코스예요.';
   if (reportWaypoints.length < 2) {
     showToast('러닝 경로가 없어요. 러닝 후 다시 시도해주세요 🏃'); return;
   }
@@ -1226,9 +1230,9 @@ async function submitReport() {
 
   try {
     await sb.insert('reports', {
-      name, km,
-      type: selectedReportType,
-      description,
+      name, km: finalKm,
+      type: finalType,
+      description: finalDesc,
       status: 'pending',
       lat: startLat,
       lng: startLng,
