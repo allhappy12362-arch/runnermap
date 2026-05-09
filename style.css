@@ -1471,3 +1471,21 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 }
 .music-like-btn.liked .music-like-count { color: var(--accent); }
 .music-like-btn:active { transform: scale(0.92); }
+
+/* 자동완성 */
+.music-input-wrap { position: relative; flex: 1; min-width: 0; }
+.music-input-wrap .music-input { width: 100%; box-sizing: border-box; }
+.music-autocomplete {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--bg); border: 0.5px solid var(--border2);
+  border-radius: 10px; overflow: hidden; z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.music-ac-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; cursor: pointer; transition: background 0.1s;
+}
+.music-ac-item:hover, .music-ac-item.active { background: var(--bg3); }
+.music-ac-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.music-ac-artist { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+.music-ac-likes { font-size: 11px; color: var(--accent); font-family: 'DM Mono', monospace; flex-shrink: 0; }

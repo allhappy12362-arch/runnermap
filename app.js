@@ -2194,30 +2194,104 @@ function closeMusicOnBg(e) {
   if (e.target === document.getElementById('musicOverlay')) closeMusicModal();
 }
 
+let musicCache = []; // 자동완성용 캐시
+let musicAcIndex = -1; // 자동완성 선택 인덱스
+
+function renderMusicList(data) {
+  const el = document.getElementById('musicList');
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div class="music-empty">아직 제보된 음악이 없어요 🎵<br>첫 번째로 제보해보세요!</div>';
+    return;
+  }
+  // 추천 수 기준 정렬
+  data.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  el.innerHTML = data.map((m, i) => `
+    <div class="music-item" id="mitem-${m.id}">
+      <div class="music-rank">${i + 1}</div>
+      <div class="music-info">
+        <div class="music-name">${m.title}</div>
+        <div class="music-artist">${m.artist || '아티스트 미상'}</div>
+      </div>
+      <button class="music-like-btn" onclick="toggleMusicLike('${m.id}', this, ${m.likes || 0})">
+        <span class="music-like-icon">♪</span>
+        <span class="music-like-count">${m.likes || 0}명 추천</span>
+      </button>
+    </div>
+  `).join('');
+}
+
 async function loadMusicList() {
   const el = document.getElementById('musicList');
   el.innerHTML = '<div class="music-loading">불러오는 중...</div>';
   try {
-    const data = await sb.select('music', 'order=likes.desc&limit=50');
-    if (!data || data.length === 0) {
-      el.innerHTML = '<div class="music-empty">아직 제보된 음악이 없어요 🎵<br>첫 번째로 제보해보세요!</div>';
-      return;
-    }
-    el.innerHTML = data.map((m, i) => `
-      <div class="music-item">
-        <div class="music-rank">${i + 1}</div>
-        <div class="music-info">
-          <div class="music-name">${m.title}</div>
-          <div class="music-artist">${m.artist || '아티스트 미상'}</div>
-        </div>
-        <button class="music-like-btn" onclick="toggleMusicLike('${m.id}', this)">
-          <span class="music-like-icon">♪</span>
-          <span class="music-like-count">${m.likes || 0}명 추천</span>
-        </button>
-      </div>
-    `).join('');
+    const data = await sb.select('music', 'order=likes.desc&limit=100');
+    musicCache = data || [];
+    renderMusicList(musicCache);
   } catch(e) {
     el.innerHTML = '<div class="music-empty">불러오기 실패. 잠시 후 다시 시도해주세요.</div>';
+  }
+}
+
+// ── 자동완성 ──
+function onMusicTitleInput(val) {
+  musicAcIndex = -1;
+  const ac = document.getElementById('musicAutocomplete');
+  if (!val || val.length < 1 || musicCache.length === 0) {
+    ac.innerHTML = ''; ac.style.display = 'none'; return;
+  }
+  const q = val.toLowerCase();
+  const matches = musicCache.filter(m =>
+    m.title.toLowerCase().includes(q) ||
+    (m.artist || '').toLowerCase().includes(q)
+  ).slice(0, 6);
+
+  if (matches.length === 0) { ac.innerHTML = ''; ac.style.display = 'none'; return; }
+
+  ac.style.display = 'block';
+  ac.innerHTML = matches.map((m, i) => `
+    <div class="music-ac-item" data-idx="${i}"
+      onmousedown="selectMusicAc('${m.title.replace(/'/g,"\'")}','${(m.artist||'').replace(/'/g,"\'")}','${m.id}')">
+      <span class="music-ac-title">${m.title}</span>
+      <span class="music-ac-artist">${m.artist || ''}</span>
+      <span class="music-ac-likes">♪ ${m.likes || 0}</span>
+    </div>
+  `).join('');
+}
+
+function onMusicTitleKey(e) {
+  const ac = document.getElementById('musicAutocomplete');
+  const items = ac.querySelectorAll('.music-ac-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    musicAcIndex = Math.min(musicAcIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === musicAcIndex));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    musicAcIndex = Math.max(musicAcIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('active', i === musicAcIndex));
+  } else if (e.key === 'Enter' && musicAcIndex >= 0) {
+    e.preventDefault();
+    items[musicAcIndex].dispatchEvent(new Event('mousedown'));
+  } else if (e.key === 'Escape') {
+    ac.style.display = 'none';
+  }
+}
+
+function selectMusicAc(title, artist, id) {
+  // 이미 있는 곡 → 추천만 +1
+  document.getElementById('musicTitle').value = '';
+  document.getElementById('musicArtist').value = '';
+  document.getElementById('musicAutocomplete').style.display = 'none';
+  // 해당 곡 찾아서 추천 버튼 클릭
+  const item = document.getElementById(`mitem-${id}`);
+  if (item) {
+    const btn = item.querySelector('.music-like-btn');
+    if (btn) {
+      item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => btn.click(), 400);
+      showToast(`♪ "${title}" 추천했어요!`);
+    }
   }
 }
 
@@ -2225,26 +2299,45 @@ async function submitMusic() {
   const title = document.getElementById('musicTitle').value.trim();
   const artist = document.getElementById('musicArtist').value.trim();
   if (!title) { showToast('곡 제목을 입력해주세요'); return; }
+
+  // 중복 체크
+  const dup = musicCache.find(m => m.title.toLowerCase() === title.toLowerCase());
+  if (dup) {
+    showToast('이미 있는 곡이에요! 추천 버튼을 눌러주세요 ♪');
+    document.getElementById('musicTitle').value = '';
+    return;
+  }
+
   try {
     await sb.insert('music', { title, artist: artist || null, likes: 1 });
     document.getElementById('musicTitle').value = '';
     document.getElementById('musicArtist').value = '';
+    document.getElementById('musicAutocomplete').style.display = 'none';
     showToast('🎵 음악이 제보됐어요!');
-    loadMusicList();
+    await loadMusicList();
   } catch(e) {
     showToast('제보 실패. 다시 시도해주세요');
   }
 }
 
-async function toggleMusicLike(id, btn) {
+async function toggleMusicLike(id, btn, currentLikes) {
   const countEl = btn.querySelector('.music-like-count');
-  const current = parseInt(countEl.textContent) || 0;
+  const current = typeof currentLikes === 'number' ? currentLikes : parseInt(countEl.textContent) || 0;
   const newCount = current + 1;
 
-  // 즉시 UI 반영
+  // 즉시 UI 반영 + 캐시 업데이트
   countEl.textContent = `${newCount}명 추천`;
+  btn.setAttribute('onclick', `toggleMusicLike('${id}', this, ${newCount})`);
   btn.classList.add('liked');
   setTimeout(() => btn.classList.remove('liked'), 400);
+
+  // 캐시 업데이트 후 실시간 재정렬
+  const cached = musicCache.find(m => m.id === id);
+  if (cached) {
+    cached.likes = newCount;
+    // 부드럽게 재정렬
+    setTimeout(() => renderMusicList([...musicCache]), 500);
+  }
 
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/music?id=eq.${id}`, {
@@ -2257,7 +2350,7 @@ async function toggleMusicLike(id, btn) {
       body: JSON.stringify({ likes: newCount })
     });
   } catch(e) {
-    // 롤백
     countEl.textContent = `${current}명 추천`;
+    if (cached) cached.likes = current;
   }
 }
