@@ -163,17 +163,38 @@
       </div>
       <button class="music-close" onclick="closeMusicModal()">✕</button>
     </div>
+    <!-- 카테고리 탭 -->
+    <div class="music-tabs">
+      <button class="music-tab active" id="mtab-all"    onclick="switchMusicTab('all')">전체</button>
+      <button class="music-tab"        id="mtab-high"   onclick="switchMusicTab('high')">🔥 고강도</button>
+      <button class="music-tab"        id="mtab-mid"    onclick="switchMusicTab('mid')">🏃 중강도</button>
+      <button class="music-tab"        id="mtab-night"  onclick="switchMusicTab('night')">🌙 야간</button>
+      <button class="music-tab"        id="mtab-focus"  onclick="switchMusicTab('focus')">⚡ 집중</button>
+      <button class="music-tab"        id="mtab-chill"  onclick="switchMusicTab('chill')">🌅 회복</button>
+    </div>
     <!-- 제보 입력 -->
     <div class="music-report-box">
-      <div class="music-report-row">
-        <div class="music-input-wrap">
-          <input type="text" class="music-input" id="musicTitle" placeholder="곡 제목"
-            oninput="onMusicTitleInput(this.value)"
-            onkeydown="onMusicTitleKey(event)"
-            autocomplete="off">
-          <div class="music-autocomplete" id="musicAutocomplete"></div>
+      <div class="music-report-col">
+        <div class="music-report-row">
+          <div class="music-input-wrap">
+            <input type="text" class="music-input" id="musicTitle" placeholder="곡 제목"
+              oninput="onMusicTitleInput(this.value)"
+              onkeydown="onMusicTitleKey(event)"
+              autocomplete="off">
+          </div>
+          <input type="text" class="music-input" id="musicArtist" placeholder="아티스트">
         </div>
-        <input type="text" class="music-input" id="musicArtist" placeholder="아티스트">
+        <!-- 자동완성 (row 아래로 분리) -->
+        <div class="music-autocomplete" id="musicAutocomplete"></div>
+        <!-- 카테고리 선택 -->
+        <div class="music-cat-row">
+          <button class="music-cat-btn selected" id="mcat-all"   onclick="selectMusicCat(this,'all')">전체</button>
+          <button class="music-cat-btn" id="mcat-high"  onclick="selectMusicCat(this,'high')">🔥 고강도</button>
+          <button class="music-cat-btn" id="mcat-mid"   onclick="selectMusicCat(this,'mid')">🏃 중강도</button>
+          <button class="music-cat-btn" id="mcat-night" onclick="selectMusicCat(this,'night')">🌙 야간</button>
+          <button class="music-cat-btn" id="mcat-focus" onclick="selectMusicCat(this,'focus')">⚡ 집중</button>
+          <button class="music-cat-btn" id="mcat-chill" onclick="selectMusicCat(this,'chill')">🌅 회복</button>
+        </div>
       </div>
       <button class="music-report-btn" onclick="submitMusic()">+ 제보하기</button>
     </div>

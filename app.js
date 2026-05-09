@@ -2196,21 +2196,30 @@ function closeMusicOnBg(e) {
 
 let musicCache = []; // 자동완성용 캐시
 let musicAcIndex = -1; // 자동완성 선택 인덱스
+let musicCurrentTab = 'all'; // 현재 카테고리 탭
+let musicSelectedCat = 'all'; // 제보할 카테고리
 
 function renderMusicList(data) {
   const el = document.getElementById('musicList');
-  if (!data || data.length === 0) {
-    el.innerHTML = '<div class="music-empty">아직 제보된 음악이 없어요 🎵<br>첫 번째로 제보해보세요!</div>';
+  // 탭 필터
+  const filtered = musicCurrentTab === 'all'
+    ? data
+    : data.filter(m => m.category === musicCurrentTab);
+  if (!filtered || filtered.length === 0) {
+    el.innerHTML = '<div class="music-empty">이 카테고리에 아직 음악이 없어요 🎵<br>첫 번째로 제보해보세요!</div>';
     return;
   }
-  // 추천 수 기준 정렬
-  data.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-  el.innerHTML = data.map((m, i) => `
+  filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  const catLabel = { high:'🔥 고강도', mid:'🏃 중강도', night:'🌙 야간', focus:'⚡ 집중', chill:'🌅 회복' };
+  el.innerHTML = filtered.map((m, i) => `
     <div class="music-item" id="mitem-${m.id}">
       <div class="music-rank">${i + 1}</div>
       <div class="music-info">
         <div class="music-name">${m.title}</div>
-        <div class="music-artist">${m.artist || '아티스트 미상'}</div>
+        <div class="music-artist-row">
+          <span class="music-artist">${m.artist || '아티스트 미상'}</span>
+          ${m.category && m.category !== 'all' ? `<span class="music-cat-tag">${catLabel[m.category] || ''}</span>` : ''}
+        </div>
       </div>
       <button class="music-like-btn" onclick="toggleMusicLike('${m.id}', this, ${m.likes || 0})">
         <span class="music-like-icon">♪</span>
@@ -2218,6 +2227,21 @@ function renderMusicList(data) {
       </button>
     </div>
   `).join('');
+}
+
+function switchMusicTab(tab) {
+  musicCurrentTab = tab;
+  ['all','high','mid','night','focus','chill'].forEach(t => {
+    const el = document.getElementById(`mtab-${t}`);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+  renderMusicList(musicCache);
+}
+
+function selectMusicCat(btn, cat) {
+  musicSelectedCat = cat;
+  document.querySelectorAll('.music-cat-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
 }
 
 async function loadMusicList() {
@@ -2309,10 +2333,14 @@ async function submitMusic() {
   }
 
   try {
-    await sb.insert('music', { title, artist: artist || null, likes: 1 });
+    await sb.insert('music', { title, artist: artist || null, likes: 1, category: musicSelectedCat === 'all' ? null : musicSelectedCat });
     document.getElementById('musicTitle').value = '';
     document.getElementById('musicArtist').value = '';
     document.getElementById('musicAutocomplete').style.display = 'none';
+    musicSelectedCat = 'all';
+    document.querySelectorAll('.music-cat-btn').forEach(b => b.classList.remove('selected'));
+    const allBtn = document.getElementById('mcat-all');
+    if (allBtn) allBtn.classList.add('selected');
     showToast('🎵 음악이 제보됐어요!');
     await loadMusicList();
   } catch(e) {

@@ -1406,7 +1406,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
   background: var(--bg3);
 }
-.music-report-row { display: flex; gap: 8px; }
+.music-report-row { display: flex; gap: 8px; align-items: center; }
 .music-input {
   flex: 1; background: var(--bg2); border: 0.5px solid var(--border2);
   border-radius: 10px; padding: 10px 12px; color: var(--text);
@@ -1489,3 +1489,48 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .music-ac-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .music-ac-artist { font-size: 11px; color: var(--text3); flex-shrink: 0; }
 .music-ac-likes { font-size: 11px; color: var(--accent); font-family: 'DM Mono', monospace; flex-shrink: 0; }
+
+/* 음악 카테고리 탭 */
+.music-tabs {
+  display: flex; overflow-x: auto; gap: 6px;
+  padding: 12px 16px; border-bottom: 0.5px solid var(--border2);
+  flex-shrink: 0; scrollbar-width: none;
+}
+.music-tabs::-webkit-scrollbar { display: none; }
+.music-tab {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  color: var(--text3); font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+}
+.music-tab.active {
+  background: var(--accent); border-color: var(--accent);
+  color: #0d0d0d;
+}
+/* 제보 폼 카테고리 선택 */
+.music-report-col { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.music-cat-row {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.music-cat-btn {
+  padding: 5px 10px; border-radius: 16px;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  color: var(--text3); font-size: 11px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+}
+.music-cat-btn.selected {
+  background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+}
+/* 카테고리 태그 */
+.music-artist-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.music-cat-tag {
+  font-size: 10px; color: var(--accent); background: var(--accent-dim);
+  padding: 2px 7px; border-radius: 10px; flex-shrink: 0;
+}
+/* 자동완성 위치 수정 */
+.music-report-box { position: relative; }
+.music-autocomplete {
+  width: 100%; margin-top: 0;
+}
