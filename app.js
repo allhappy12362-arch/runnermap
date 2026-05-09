@@ -2097,11 +2097,12 @@ function closeAdmin() {
 
 function switchAdminTab(tab) {
   adminCurrentTab = tab;
-  ['pending','approved','rejected'].forEach(t => {
-    document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1))
-      .classList.toggle('active', t === tab);
+  ['pending','approved','rejected','music'].forEach(t => {
+    const el = document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (el) el.classList.toggle('active', t === tab);
   });
-  loadAdminTab(tab);
+  if (tab === 'music') loadAdminMusic();
+  else loadAdminTab(tab);
 }
 
 async function loadAdminTab(tab) {
@@ -2333,7 +2334,7 @@ async function submitMusic() {
   }
 
   try {
-    await sb.insert('music', { title, artist: artist || null, likes: 1, category: musicSelectedCat === 'all' ? null : musicSelectedCat });
+    await sb.insert('music', { title, artist: artist || null, likes: 1, category: musicCurrentTab === 'all' ? null : musicCurrentTab });
     document.getElementById('musicTitle').value = '';
     document.getElementById('musicArtist').value = '';
     document.getElementById('musicAutocomplete').style.display = 'none';
@@ -2394,4 +2395,54 @@ function copyMusicTitle(text, el) {
       name.style.color = '';
     }, 1200);
   }).catch(() => showToast('복사 실패'));
+}
+
+async function loadAdminMusic() {
+  const body = document.getElementById('adminBody');
+  body.innerHTML = '<div class="admin-loading">불러오는 중...</div>';
+  try {
+    const data = await sb.select('music', 'order=created_at.desc&limit=100');
+    if (!data || data.length === 0) {
+      body.innerHTML = '<div class="admin-empty">등록된 음악이 없어요</div>';
+      return;
+    }
+    const catLabel = { high:'🔥 고강도', mid:'🏃 중강도', night:'🌙 야간', focus:'⚡ 집중', chill:'🌅 회복' };
+    body.innerHTML = data.map(m => `
+      <div class="admin-card" id="adminMusicCard-${m.id}">
+        <div class="admin-card-header">
+          <div class="admin-card-name">${m.title}</div>
+          <div class="admin-card-meta">
+            ${m.artist || '아티스트 미상'} · 
+            ${m.category ? catLabel[m.category] || m.category : '카테고리 없음'} · 
+            ♪ ${m.likes || 0}명 추천
+          </div>
+        </div>
+        <div class="admin-card-actions">
+          <button class="admin-btn-reject" onclick="deleteMusic('${m.id}')">🗑️ 삭제</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    body.innerHTML = '<div class="admin-empty">불러오기 실패</div>';
+  }
+}
+
+async function deleteMusic(id) {
+  if (!confirm('이 음악을 삭제할까요?')) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/music?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    const card = document.getElementById(`adminMusicCard-${id}`);
+    if (card) card.remove();
+    // musicCache에서도 제거
+    musicCache = musicCache.filter(m => m.id !== id);
+    showToast('🗑️ 삭제됐어요');
+  } catch(e) {
+    showToast('삭제 실패');
+  }
 }

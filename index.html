@@ -188,15 +188,7 @@
         </div>
         <!-- 자동완성 (row 아래로 분리) -->
         <div class="music-autocomplete" id="musicAutocomplete"></div>
-        <!-- 카테고리 선택 -->
-        <div class="music-cat-row">
-          <button class="music-cat-btn selected" id="mcat-all"   onclick="selectMusicCat(this,'all')">전체</button>
-          <button class="music-cat-btn" id="mcat-high"  onclick="selectMusicCat(this,'high')">🔥 고강도</button>
-          <button class="music-cat-btn" id="mcat-mid"   onclick="selectMusicCat(this,'mid')">🏃 중강도</button>
-          <button class="music-cat-btn" id="mcat-night" onclick="selectMusicCat(this,'night')">🌙 야간</button>
-          <button class="music-cat-btn" id="mcat-focus" onclick="selectMusicCat(this,'focus')">⚡ 집중</button>
-          <button class="music-cat-btn" id="mcat-chill" onclick="selectMusicCat(this,'chill')">🌅 회복</button>
-        </div>
+
       </div>
       <button class="music-report-btn" onclick="submitMusic()">+ 음악 추천하기</button>
     </div>
@@ -388,6 +380,7 @@
     <div class="admin-tab active" id="adminTabPending" onclick="switchAdminTab('pending')">대기중 제보</div>
     <div class="admin-tab" id="adminTabApproved" onclick="switchAdminTab('approved')">승인됨</div>
     <div class="admin-tab" id="adminTabRejected" onclick="switchAdminTab('rejected')">반려됨</div>
+    <div class="admin-tab" id="adminTabMusic" onclick="switchAdminTab('music')">🎵 음악관리</div>
   </div>
   <div class="admin-body" id="adminBody"></div>
 </div>
