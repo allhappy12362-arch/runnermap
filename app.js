@@ -2341,7 +2341,7 @@ async function submitMusic() {
     document.querySelectorAll('.music-cat-btn').forEach(b => b.classList.remove('selected'));
     const allBtn = document.getElementById('mcat-all');
     if (allBtn) allBtn.classList.add('selected');
-    showToast('🎵 음악이 제보됐어요!');
+    showToast('🎵 음악이 추천됐어요!');
     await loadMusicList();
   } catch(e) {
     showToast('제보 실패. 다시 시도해주세요');
