@@ -1392,6 +1392,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   overflow-x: auto; overflow-y: hidden;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
   flex-shrink: 0; border-bottom: 0.5px solid var(--border2);
+  width: 100%;
 }
 .music-tabs-wrapper::-webkit-scrollbar { display: none; }
 .music-header {
@@ -1499,12 +1500,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 /* 음악 카테고리 탭 */
 .music-tabs {
-  display: flex; overflow-x: auto; gap: 6px;
+  display: inline-flex; gap: 6px;
   padding: 10px 16px;
-  flex-shrink: 0; scrollbar-width: none;
-  width: max-content; min-width: 100%; box-sizing: border-box;
+  white-space: nowrap;
 }
-.music-tabs::-webkit-scrollbar { display: none; }
 .music-tab {
   flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
   background: var(--bg3); border: 0.5px solid var(--border2);
