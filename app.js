@@ -209,6 +209,48 @@ async function showCourseRoute(id) {
   // route info 업데이트
   document.getElementById('routeInfoKm').textContent = c.km + 'km';
   document.getElementById('routeInfoName').textContent = c.name;
+
+  // 편의시설 마커 표시
+  showFacilityMarkers(c, linePath);
+}
+
+function showFacilityMarkers(c, linePath) {
+  if (!c.facilities || !kakao.maps.services) return;
+
+  // 코스 중심 좌표 계산
+  const midIdx = Math.floor(linePath.length / 2);
+  const centerLat = linePath[midIdx].getLat();
+  const centerLng = linePath[midIdx].getLng();
+  const centerPos = new kakao.maps.LatLng(centerLat, centerLng);
+
+  const ps = new kakao.maps.services.Places();
+  const radius = Math.max(800, (c.km || 5) * 150);
+
+  const facilityTypes = [];
+  if (c.facilities.toilet) facilityTypes.push({ keyword: '공중화장실', icon: '🚻', color: '#4d9fff' });
+  if (c.facilities.water)  facilityTypes.push({ keyword: '음수대', icon: '💧', color: '#4dd9ff' });
+  if (c.facilities.store)  facilityTypes.push({ keyword: '편의점', icon: '🏪', color: '#ffcc00' });
+
+  facilityTypes.forEach(({ keyword, icon, color }) => {
+    ps.keywordSearch(keyword, (result, status) => {
+      if (status !== kakao.maps.services.Status.OK) return;
+      // 최대 3개만 표시
+      result.slice(0, 3).forEach(place => {
+        const pos = new kakao.maps.LatLng(place.y, place.x);
+        const content = `<div style="
+          background:#0d0d0d;border:1.5px solid ${color};border-radius:20px;
+          padding:3px 9px;font-size:11px;color:${color};
+          font-family:'Noto Sans KR',sans-serif;white-space:nowrap;
+          box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:default;
+        ">${icon} ${place.place_name}</div>`;
+        const overlay = new kakao.maps.CustomOverlay({
+          position: pos, content, yAnchor: 1.3, zIndex: 3
+        });
+        overlay.setMap(kakaoMap);
+        activeRouteMarkers.push(overlay);
+      });
+    }, { location: centerPos, radius, sort: kakao.maps.services.SortBy.DISTANCE });
+  });
 }
 
 function clearRouteOverlay() {
@@ -757,6 +799,25 @@ function openDetail(id) {
     </div>
 
     <div class="detail-section">
+      <div class="detail-section-title">📍 출발 · 도착 지점</div>
+      <div class="startpoint-box" id="startpointBox">
+        <div class="startpoint-row">
+          <span class="startpoint-dot start"></span>
+          <div class="startpoint-info">
+            <div class="startpoint-label">출발</div>
+            <div class="startpoint-addr" id="startAddr">주소 불러오는 중...</div>
+          </div>
+        </div>
+        <div class="startpoint-row">
+          <span class="startpoint-dot end"></span>
+          <div class="startpoint-info">
+            <div class="startpoint-label">도착</div>
+            <div class="startpoint-addr" id="endAddr">${c.path && c.path.length > 1 ? '불러오는 중...' : '출발점과 동일'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-section">
       <div class="detail-section-title">코스 분위기</div>
       <div class="vibe-grid">${vibeItems}</div>
     </div>
@@ -809,6 +870,8 @@ function openDetail(id) {
   calcPace(c.km);
   // 후기 렌더링
   renderReviews(id);
+  // 출발/도착 주소 역지오코딩
+  resolveStartEndAddr(c);
 }
 
 // ── 페이스 계산기 ──
@@ -818,6 +881,40 @@ function setPaceLevel(btn, min, sec, km) {
   document.getElementById('paceMin').value = min;
   document.getElementById('paceSec').value = sec;
   calcPace(km);
+}
+
+function resolveStartEndAddr(c) {
+  if (!kakao.maps.services) return;
+  const gc = new kakao.maps.services.Geocoder();
+
+  const startPt = c.startPoint || (c.path && c.path[0]);
+  const endPt = c.path && c.path.length > 1 ? c.path[c.path.length - 1] : null;
+
+  if (startPt) {
+    gc.coord2Address(startPt[1], startPt[0], (result, status) => {
+      const el = document.getElementById('startAddr');
+      if (!el) return;
+      if (status === kakao.maps.services.Status.OK && result[0]) {
+        const addr = result[0].road_address?.address_name || result[0].address?.address_name || '주소 없음';
+        el.textContent = addr;
+      } else {
+        el.textContent = `${startPt[0].toFixed(4)}, ${startPt[1].toFixed(4)}`;
+      }
+    });
+  }
+
+  if (endPt) {
+    gc.coord2Address(endPt[1], endPt[0], (result, status) => {
+      const el = document.getElementById('endAddr');
+      if (!el) return;
+      if (status === kakao.maps.services.Status.OK && result[0]) {
+        const addr = result[0].road_address?.address_name || result[0].address?.address_name || '주소 없음';
+        el.textContent = addr;
+      } else {
+        el.textContent = `${endPt[0].toFixed(4)}, ${endPt[1].toFixed(4)}`;
+      }
+    });
+  }
 }
 
 function calcPace(km) {
