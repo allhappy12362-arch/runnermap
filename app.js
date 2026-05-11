@@ -41,6 +41,15 @@ function initKakaoMap() {
   };
   kakaoMap = new kakao.maps.Map(container, options);
   kakaoMap.setZoomable(true);
+  // 지도 클릭 시 미니카드 닫기
+  kakao.maps.event.addListener(kakaoMap, 'click', () => {
+    if (document.getElementById('miniCard').classList.contains('open')) {
+      closeMiniCard();
+      currentCourseId = null;
+      clearRouteOverlay();
+      renderMapMarkers();
+    }
+  });
   // 레이아웃 렌더 후 지도 크기 재계산
   setTimeout(() => { kakaoMap.relayout(); kakaoMap.setCenter(options.center); }, 100);
   setTimeout(() => { kakaoMap.relayout(); }, 500);
@@ -184,22 +193,26 @@ async function showCourseRoute(id) {
 
   // 출발 마커
   const startContent = `<div style="display:flex;flex-direction:column;align-items:center">
-    <div style="background:#0d0d0d;border:1.5px solid #c8ff00;border-radius:20px;padding:2px 8px;font-size:10px;color:#c8ff00;font-family:'Noto Sans KR',sans-serif;margin-bottom:3px;white-space:nowrap;">▶ 출발</div>
-    <div style="width:10px;height:10px;border-radius:50%;background:#c8ff00;border:2px solid #0d0d0d;"></div>
+    <div style="background:#0d0d0d;border:2px solid #c8ff00;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:#c8ff00;font-family:'Noto Sans KR',sans-serif;margin-bottom:4px;white-space:nowrap;box-shadow:0 0 8px rgba(200,255,0,0.4);">▶ 출발</div>
+    <div style="width:12px;height:12px;border-radius:50%;background:#c8ff00;border:2px solid #0d0d0d;box-shadow:0 0 6px rgba(200,255,0,0.6);"></div>
   </div>`;
-  const startOverlay = new kakao.maps.CustomOverlay({ position: linePath[0], content: startContent, yAnchor: 1 });
+  const startOverlay = new kakao.maps.CustomOverlay({ position: linePath[0], content: startContent, yAnchor: 1, zIndex: 10 });
   startOverlay.setMap(kakaoMap);
   activeRouteMarkers.push(startOverlay);
 
-  // 도착 마커
+  // 도착 마커 (출발과 같은 좌표면 순환코스 — 생략)
   const endPt = linePath[linePath.length - 1];
-  const endContent = `<div style="display:flex;flex-direction:column;align-items:center">
-    <div style="background:#0d0d0d;border:1.5px solid ${color};border-radius:20px;padding:2px 8px;font-size:10px;color:${color};font-family:'Noto Sans KR',sans-serif;margin-bottom:3px;white-space:nowrap;">■ 도착</div>
-    <div style="width:10px;height:10px;border-radius:50%;background:${color};border:2px solid #0d0d0d;"></div>
-  </div>`;
-  const endOverlay = new kakao.maps.CustomOverlay({ position: endPt, content: endContent, yAnchor: 1 });
-  endOverlay.setMap(kakaoMap);
-  activeRouteMarkers.push(endOverlay);
+  const isSamePoint = linePath[0].getLat().toFixed(4) === endPt.getLat().toFixed(4) &&
+                      linePath[0].getLng().toFixed(4) === endPt.getLng().toFixed(4);
+  if (!isSamePoint) {
+    const endContent = `<div style="display:flex;flex-direction:column;align-items:center">
+      <div style="background:#0d0d0d;border:2px solid ${color};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:${color};font-family:'Noto Sans KR',sans-serif;margin-bottom:4px;white-space:nowrap;box-shadow:0 0 8px rgba(255,77,77,0.4);">■ 도착</div>
+      <div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #0d0d0d;"></div>
+    </div>`;
+    const endOverlay = new kakao.maps.CustomOverlay({ position: endPt, content: endContent, yAnchor: 1, zIndex: 9 });
+    endOverlay.setMap(kakaoMap);
+    activeRouteMarkers.push(endOverlay);
+  }
 
   // 전체 경로 보이게 줌 조정
   const bounds = new kakao.maps.LatLngBounds();
@@ -689,6 +702,41 @@ function openDetail(id) {
   const c = COURSES.find(x => x.id === id);
   if (!c) return;
 
+  // 미니 카드 표시
+  openMiniCard(c);
+
+  // 지도에 경로 그리기
+  showCourseRoute(id);
+}
+
+function openMiniCard(c) {
+  const isSaved = savedCourses.includes(c.id);
+  const catLabel = { scenic:'🌅 경치', quiet:'🌿 조용함', night:'🌙 야간', workout:'⛰ 업다운', flat:'⬛ 평지' };
+  const facilityTags = [];
+  if (c.facilities?.toilet) facilityTags.push('🚻 화장실');
+  if (c.facilities?.water)  facilityTags.push('💧 음수대');
+  if (c.facilities?.store)  facilityTags.push('🏪 편의점');
+  if (c.vibes?.night)       facilityTags.push('🌙 야간가능');
+  if (c.vibes?.scenic)      facilityTags.push('🌅 경치좋음');
+
+  document.getElementById('miniCardName').textContent = c.name;
+  document.getElementById('miniCardMeta').textContent = `${c.region} · ${c.km}km · ${c.feel}`;
+  document.getElementById('miniCardTags').innerHTML = facilityTags.slice(0,4).map(t => `<span class="mini-card-tag">${t}</span>`).join('');
+  const saveBtn = document.getElementById('miniCardSave');
+  saveBtn.textContent = isSaved ? '♥' : '♡';
+  saveBtn.className = 'mini-card-save' + (isSaved ? ' saved' : '');
+  document.getElementById('miniCard').classList.add('open');
+}
+
+function closeMiniCard() {
+  document.getElementById('miniCard').classList.remove('open');
+}
+
+function openFullDetail() {
+  const id = currentCourseId;
+  const c = COURSES.find(x => x.id === id);
+  if (!c) return;
+
   // 헤더 이미지 적용
   const headerImg = document.getElementById('detailHeaderImg');
   if (c.image_url) {
@@ -863,9 +911,6 @@ function openDetail(id) {
   btn.className = 'detail-save-btn' + (isSaved?' saved':'');
   btn.textContent = isSaved ? '♥ 저장됨' : '♡ 저장하기';
   document.getElementById('detailOverlay').classList.add('open');
-
-  // 지도에 경로 그리기
-  showCourseRoute(id);
   // 초기 페이스 계산
   calcPace(c.km);
   // 후기 렌더링
@@ -962,8 +1007,19 @@ function calcPace(km) {
   tipEl.textContent = tip;
 }
 
-function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); }
-function closeDetailOnBg(e) { if (e.target===document.getElementById('detailOverlay')) closeDetail(); }
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+}
+function closeDetailOnBg(e) {
+  if (e.target===document.getElementById('detailOverlay')) closeDetail();
+}
+function closeAllDetail() {
+  closeDetail();
+  closeMiniCard();
+  currentCourseId = null;
+  clearRouteOverlay();
+  renderMapMarkers();
+}
 
 function toggleDetailSave() {
   if (currentCourseId===null) return;

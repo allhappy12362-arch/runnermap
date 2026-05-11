@@ -71,8 +71,29 @@
 </div><!-- /.layout -->
 
 <!-- DETAIL SHEET -->
+<!-- 미니 카드 (하단 고정) -->
+<div class="mini-card" id="miniCard">
+  <div class="mini-card-handle"></div>
+  <div class="mini-card-content">
+    <div class="mini-card-info">
+      <div class="mini-card-name" id="miniCardName"></div>
+      <div class="mini-card-meta" id="miniCardMeta"></div>
+      <div class="mini-card-tags" id="miniCardTags"></div>
+    </div>
+    <div class="mini-card-actions">
+      <button class="mini-card-save" id="miniCardSave" onclick="toggleDetailSave()">♡</button>
+      <button class="mini-card-detail" onclick="openFullDetail()">상세보기 ↑</button>
+    </div>
+  </div>
+  <div class="mini-card-btns">
+    <button class="mini-run-btn" onclick="startRunWithCourse()">🏃 이 코스 뛰기</button>
+  </div>
+</div>
+
+<!-- 풀 상세 시트 -->
 <div class="detail-overlay" id="detailOverlay" onclick="closeDetailOnBg(event)">
   <div class="detail-sheet" id="detailSheet">
+    <div class="detail-handle-bar"><div class="detail-handle"></div></div>
     <div class="detail-header-img" id="detailHeaderImg">
       <div class="detail-header-gradient"></div>
       <div class="detail-header-actions">
