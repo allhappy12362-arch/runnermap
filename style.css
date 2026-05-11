@@ -1389,7 +1389,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   overflow: hidden;
 }
 .music-tabs-wrapper {
-  overflow-x: auto; overflow-y: hidden;
+  overflow: visible;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
   flex-shrink: 0; border-bottom: 0.5px solid var(--border2);
   width: 100%;
@@ -1500,16 +1500,20 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 /* 음악 카테고리 탭 */
 .music-tabs {
-  display: inline-flex; gap: 6px;
-  padding: 10px 16px;
-  white-space: nowrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 10px 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 .music-tab {
-  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  padding: 8px 6px; border-radius: 12px;
   background: var(--bg3); border: 0.5px solid var(--border2);
   color: var(--text3); font-size: 12px; font-weight: 600; cursor: pointer;
   transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
-  white-space: nowrap;
+  white-space: nowrap; text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
 }
 .music-tab.active {
   background: var(--accent); border-color: var(--accent);
@@ -1518,14 +1522,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 /* 제보 폼 카테고리 선택 */
 .music-report-col { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .music-cat-row {
-  display: flex; gap: 5px; flex-wrap: wrap;
+  display: flex; gap: 4px; flex-wrap: nowrap; width: 100%;
 }
 .music-cat-btn {
-  padding: 5px 10px; border-radius: 16px;
+  flex: 1; padding: 5px 2px; border-radius: 16px;
   background: var(--bg3); border: 0.5px solid var(--border2);
-  color: var(--text3); font-size: 11px; font-weight: 600; cursor: pointer;
+  color: var(--text3); font-size: 10px; font-weight: 600; cursor: pointer;
   transition: all 0.15s; font-family: 'Noto Sans KR', sans-serif;
-  white-space: nowrap;
+  white-space: nowrap; text-align: center;
 }
 .music-cat-btn.selected {
   background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
