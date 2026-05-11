@@ -2415,13 +2415,14 @@ function toggleMusicSave(id, title, artist, category) {
   const idx = saved.findIndex(m => m.id === id);
   if (idx >= 0) {
     saved.splice(idx, 1);
-    showToast('저장 취소됐어요');
+    showToast('🔖 저장 취소됐어요');
   } else {
     saved.push({ id, title, artist, category });
-    showToast('🔖 저장했어요!');
+    showToast('🔖 저장됐어요! 내 페이지 → 저장음악에서 확인하세요');
   }
   localStorage.setItem('savedMusic', JSON.stringify(saved));
   renderMusicList(musicCache);
+  if (document.getElementById('mypageOverlay')?.classList.contains('open')) renderMyPage();
 }
 function copyMusicItem(title, artist, btn) {
   const text = artist ? `${title} - ${artist}` : title;
@@ -2429,6 +2430,7 @@ function copyMusicItem(title, artist, btn) {
     const orig = btn.textContent;
     btn.textContent = '✓';
     btn.style.color = 'var(--accent)';
+    showToast('📋 복사됐어요!');
     setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
   }).catch(() => showToast('복사 실패'));
 }
