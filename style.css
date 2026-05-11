@@ -1545,3 +1545,28 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .music-autocomplete {
   width: 100%; margin-top: 0;
 }
+
+/* 음악 복사/저장 버튼 */
+.music-copy-btn, .music-save-btn {
+  flex-shrink: 0; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 8px; padding: 6px 8px; cursor: pointer; font-size: 14px;
+  transition: all 0.15s; color: var(--text3);
+}
+.music-copy-btn:hover { background: var(--bg2); }
+.music-save-btn.saved { background: var(--accent-dim); border-color: var(--accent); }
+.music-save-btn:active, .music-copy-btn:active { transform: scale(0.9); }
+
+/* 저장된 음악 목록 */
+.saved-music-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 16px; border-bottom: 0.5px solid var(--border);
+}
+.saved-music-info { flex: 1; min-width: 0; }
+.saved-music-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saved-music-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.saved-music-copy, .saved-music-remove {
+  flex-shrink: 0; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 8px; padding: 6px 9px; cursor: pointer; font-size: 13px;
+  color: var(--text3); transition: all 0.15s;
+}
+.saved-music-remove:hover { background: rgba(255,80,80,0.15); border-color: rgba(255,80,80,0.4); color: #ff5050; }

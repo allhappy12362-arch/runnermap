@@ -967,6 +967,23 @@ function renderMyPage() {
   if (myTab==='badge') {
     renderBadgeTab(body, notice);
   }
+  if (myTab==='music') {
+    const saved = getSavedMusic();
+    const catLabel = { high:'🔥 고강도', mid:'🏃 중강도', night:'🌙 야간', focus:'⚡ 집중', chill:'🌅 회복' };
+    if (!saved.length) {
+      body.innerHTML = notice + '<div class="mypage-empty">저장한 음악이 없어요 🎵<br>음악 탭에서 🔖 눌러 저장해보세요!</div>';
+      return;
+    }
+    body.innerHTML = notice + `<div class="mypage-section-title">저장한 음악 (${saved.length})</div>` +
+      saved.map(m => `<div class="saved-music-item">
+        <div class="saved-music-info">
+          <div class="saved-music-name">${m.title}</div>
+          <div class="saved-music-meta">${m.artist || '아티스트 미상'}${m.category ? ' · ' + (catLabel[m.category]||'') : ''}</div>
+        </div>
+        <button class="saved-music-copy" onclick="navigator.clipboard.writeText('${m.title.replace(/'/g,"\'")} - ${(m.artist||'').replace(/'/g,"\'")}').then(()=>showToast('복사됐어요!'))" title="복사">📋</button>
+        <button class="saved-music-remove" onclick="toggleMusicSave('${m.id}','${m.title.replace(/'/g,"\'")}','${(m.artist||'').replace(/'/g,"\'")}','${m.category||''}')" title="저장 취소">✕</button>
+      </div>`).join('');
+  }
   if (myTab==='reports') {
     body.innerHTML = notice + '<div class="mypage-empty">불러오는 중...</div>';
     const typeLabel = { scenic:'🌅 경치좋음', quiet:'🌿 조용함', night:'🌙 야간러닝', workout:'💪 업다운' };
@@ -1260,7 +1277,7 @@ async function submitReport() {
 // ── switchMyTab 업데이트 (badge 탭 포함) ──
 function switchMyTab(tab) {
   myTab = tab;
-  ['saved','recent','records','badge','reports'].forEach(t => {
+  ['saved','recent','records','badge','reports','music'].forEach(t => {
     const el = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (el) el.classList.toggle('active', t === tab);
   });
@@ -2215,13 +2232,15 @@ function renderMusicList(data) {
   el.innerHTML = filtered.map((m, i) => `
     <div class="music-item" id="mitem-${m.id}">
       <div class="music-rank">${i + 1}</div>
-      <div class="music-info" onclick="copyMusicTitle('${m.title.replace(/'/g,"\'")} ${(m.artist||'').replace(/'/g,"\'")}', this)" style="cursor:pointer" title="탭하면 복사">
+      <div class="music-info">
         <div class="music-name">${m.title}</div>
         <div class="music-artist-row">
           <span class="music-artist">${m.artist || '아티스트 미상'}</span>
           ${m.category && m.category !== 'all' ? `<span class="music-cat-tag">${catLabel[m.category] || ''}</span>` : ''}
         </div>
       </div>
+      <button class="music-copy-btn" onclick="copyMusicItem('${m.title.replace(/'/g,"\'")}','${(m.artist||'').replace(/'/g,"\'")}',this)" title="복사">📋</button>
+      <button class="music-save-btn ${isMusicSaved(m.id) ? 'saved' : ''}" onclick="toggleMusicSave('${m.id}','${m.title.replace(/'/g,"\'")}','${(m.artist||'').replace(/'/g,"\'")}','${m.category||''}')">🔖</button>
       <button class="music-like-btn" onclick="toggleMusicLike('${m.id}', this, ${m.likes || 0})">
         <span class="music-like-icon">♪</span>
         <span class="music-like-count">${m.likes || 0}명 추천</span>
@@ -2382,6 +2401,36 @@ async function toggleMusicLike(id, btn, currentLikes) {
     countEl.textContent = `${current}명 추천`;
     if (cached) cached.likes = current;
   }
+}
+
+// 저장된 음악 로컬스토리지
+function getSavedMusic() {
+  try { return JSON.parse(localStorage.getItem('savedMusic') || '[]'); } catch { return []; }
+}
+function isMusicSaved(id) {
+  return getSavedMusic().some(m => m.id === id);
+}
+function toggleMusicSave(id, title, artist, category) {
+  let saved = getSavedMusic();
+  const idx = saved.findIndex(m => m.id === id);
+  if (idx >= 0) {
+    saved.splice(idx, 1);
+    showToast('저장 취소됐어요');
+  } else {
+    saved.push({ id, title, artist, category });
+    showToast('🔖 저장했어요!');
+  }
+  localStorage.setItem('savedMusic', JSON.stringify(saved));
+  renderMusicList(musicCache);
+}
+function copyMusicItem(title, artist, btn) {
+  const text = artist ? `${title} - ${artist}` : title;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1200);
+  }).catch(() => showToast('복사 실패'));
 }
 
 function copyMusicTitle(text, el) {
