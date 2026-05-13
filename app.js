@@ -179,31 +179,6 @@ async function showCourseRoute(id) {
     linePath = interpolated.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
     _osrmCache[id] = linePath;
 
-    // 2차: OSRM으로 도로 스냅 시도 (성공 시 경로 갱신)
-    (async () => {
-      try {
-        // 웨이포인트 최대 100개 균등 샘플링 (URL 길이 제한 대응)
-        let waypoints = c.path;
-        if (waypoints.length > 100) {
-          const step = (waypoints.length - 1) / 99;
-          waypoints = Array.from({length: 100}, (_, i) => waypoints[Math.round(i * step)]);
-        }
-        const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
-        const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`;
-        const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-        if (!res.ok) throw new Error('OSRM 응답 오류');
-        const data = await res.json();
-        if (data.code !== 'Ok' || !data.routes?.length) throw new Error('경로 없음');
-        const osrmPath = data.routes[0].geometry.coordinates.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
-        // OSRM 경로가 원본 경로와 너무 다르지 않을 때만 적용 (이탈 방지)
-        _osrmCache[id] = osrmPath;
-        if (activePolyline && activePolyline.getMap()) {
-          activePolyline.setPath(osrmPath);
-        }
-      } catch (e) {
-        console.info('OSRM 스킵, 보간 경로 사용:', e.message);
-      }
-    })();
   }
 
   // Polyline 그리기
