@@ -355,6 +355,25 @@
   <button class="run-ready-cancel-btn" onclick="cancelRunMode()">취소</button>
 </div>
 
+<!-- 미니 카드 (핀 클릭 시 하단 슬라이드) -->
+<div class="mini-card" id="miniCard">
+  <div class="mini-card-handle"></div>
+  <div class="mini-card-content">
+    <div class="mini-card-info">
+      <div class="mini-card-name" id="miniCardName"></div>
+      <div class="mini-card-meta" id="miniCardMeta"></div>
+      <div class="mini-card-tags" id="miniCardTags"></div>
+    </div>
+    <div class="mini-card-actions">
+      <button class="mini-card-save" id="miniCardSave" onclick="toggleMiniCardSave()">♡</button>
+      <button class="mini-card-detail" onclick="openFullDetail()">상세 →</button>
+    </div>
+  </div>
+  <div class="mini-card-btns">
+    <button class="detail-run-btn" style="flex:1" onclick="startRunWithCourse()">🏃 이 코스 뛰기</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- 관리자 비밀번호 모달 -->

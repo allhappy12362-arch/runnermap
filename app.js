@@ -776,6 +776,19 @@ function closeMiniCard() {
   document.getElementById('miniCard').classList.remove('open');
 }
 
+function toggleMiniCardSave() {
+  if (!currentCourseId) return;
+  const idx = savedCourses.indexOf(currentCourseId);
+  if (idx === -1) savedCourses.push(currentCourseId);
+  else savedCourses.splice(idx, 1);
+  localStorage.setItem('savedCourses', JSON.stringify(savedCourses));
+  const btn = document.getElementById('miniCardSave');
+  const isSaved = savedCourses.includes(currentCourseId);
+  btn.textContent = isSaved ? '♥' : '♡';
+  btn.className = 'mini-card-save' + (isSaved ? ' saved' : '');
+  showToast(isSaved ? '저장됐어요 ♥' : '저장 취소됐어요');
+}
+
 function openFullDetail() {
   const id = currentCourseId;
   const c = COURSES.find(x => x.id === id);
