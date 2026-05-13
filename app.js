@@ -148,37 +148,62 @@ async function showCourseRoute(id) {
 
   let linePath;
 
-  try {
-    // 캐시 확인
-    if (_osrmCache[id]) {
-      linePath = _osrmCache[id];
-    } else {
-      // OSRM foot 라우팅 API — 경유 웨이포인트 모두 사용
-      // 웨이포인트가 너무 많으면 URL이 길어지므로 최대 25개로 균등 샘플링
-      let waypoints = c.path;
-      if (waypoints.length > 25) {
-        const step = (waypoints.length - 1) / 24;
-        waypoints = Array.from({length: 25}, (_, i) => waypoints[Math.round(i * step)]);
-      }
-      const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
-      const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`;
-
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('OSRM 응답 오류');
-      const data = await res.json();
-
-      if (data.code !== 'Ok' || !data.routes?.length) throw new Error('경로 없음');
-
-      // GeoJSON coordinates: [lng, lat] → kakao.maps.LatLng(lat, lng)
-      linePath = data.routes[0].geometry.coordinates.map(
-        ([lng, lat]) => new kakao.maps.LatLng(lat, lng)
-      );
-      _osrmCache[id] = linePath;
+  // path를 최대 150m 간격으로 보간 — OSRM 없이도 경로가 실제 궤적을 따름
+  function interpolatePath(path) {
+    function haversine(p1, p2) {
+      const R = 6371000, toRad = x => x * Math.PI / 180;
+      const dLat = toRad(p2[0] - p1[0]), dLng = toRad(p2[1] - p1[1]);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(p1[0]))*Math.cos(toRad(p2[0]))*Math.sin(dLng/2)**2;
+      return R * 2 * Math.asin(Math.sqrt(a));
     }
-  } catch (e) {
-    // OSRM 실패 시 원본 path 직선 폴백
-    console.warn('OSRM 실패, 직선 경로로 표시:', e.message);
-    linePath = c.path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+    const MAX_GAP = 150, result = [path[0]];
+    for (let i = 0; i < path.length - 1; i++) {
+      const gap = haversine(path[i], path[i+1]);
+      if (gap > MAX_GAP) {
+        const n = Math.ceil(gap / MAX_GAP);
+        for (let j = 1; j < n; j++) {
+          const t = j / n;
+          result.push([path[i][0] + (path[i+1][0]-path[i][0])*t, path[i][1] + (path[i+1][1]-path[i][1])*t]);
+        }
+      }
+      result.push(path[i+1]);
+    }
+    return result;
+  }
+
+  if (_osrmCache[id]) {
+    linePath = _osrmCache[id];
+  } else {
+    // 1차: 보간된 path를 기본 경로로 사용 (OSRM 불필요, 즉시 표시)
+    const interpolated = interpolatePath(c.path);
+    linePath = interpolated.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+    _osrmCache[id] = linePath;
+
+    // 2차: OSRM으로 도로 스냅 시도 (성공 시 경로 갱신)
+    (async () => {
+      try {
+        // 웨이포인트 최대 100개 균등 샘플링 (URL 길이 제한 대응)
+        let waypoints = c.path;
+        if (waypoints.length > 100) {
+          const step = (waypoints.length - 1) / 99;
+          waypoints = Array.from({length: 100}, (_, i) => waypoints[Math.round(i * step)]);
+        }
+        const coords = waypoints.map(([lat, lng]) => `${lng},${lat}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        if (!res.ok) throw new Error('OSRM 응답 오류');
+        const data = await res.json();
+        if (data.code !== 'Ok' || !data.routes?.length) throw new Error('경로 없음');
+        const osrmPath = data.routes[0].geometry.coordinates.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
+        // OSRM 경로가 원본 경로와 너무 다르지 않을 때만 적용 (이탈 방지)
+        _osrmCache[id] = osrmPath;
+        if (activePolyline && activePolyline.getMap()) {
+          activePolyline.setPath(osrmPath);
+        }
+      } catch (e) {
+        console.info('OSRM 스킵, 보간 경로 사용:', e.message);
+      }
+    })();
   }
 
   // Polyline 그리기
@@ -223,8 +248,27 @@ async function showCourseRoute(id) {
   document.getElementById('routeInfoKm').textContent = c.km + 'km';
   document.getElementById('routeInfoName').textContent = c.name;
 
+  // km 마커 표시
+  showKmMarkers(c);
   // 편의시설 마커 표시
   showFacilityMarkers(c, linePath);
+}
+
+function showKmMarkers(c) {
+  if (!c.kmMarkers || !c.kmMarkers.length) return;
+  c.kmMarkers.forEach(m => {
+    const pos = new kakao.maps.LatLng(m.pos[0], m.pos[1]);
+    const content = `<div style="
+      background:#0d0d0d;border:1px solid rgba(200,255,0,0.5);
+      border-radius:50%;width:22px;height:22px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:9px;font-weight:700;color:#c8ff00;
+      font-family:'DM Mono',monospace;
+    ">${m.km}</div>`;
+    const overlay = new kakao.maps.CustomOverlay({ position: pos, content, yAnchor: 0.5, zIndex: 4 });
+    overlay.setMap(kakaoMap);
+    activeRouteMarkers.push(overlay);
+  });
 }
 
 function showFacilityMarkers(c, linePath) {
