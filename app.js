@@ -348,13 +348,15 @@ function moveToMyLocation() {
 }
 // ── 데이터 로드 ──
 let COURSES = [];
-let savedCourses = JSON.parse(localStorage.getItem('rm_saved') || '[]');
-let recentCourses = JSON.parse(localStorage.getItem('rm_recent') || '[]');
-let records = JSON.parse(localStorage.getItem('rm_records') || '[]');
+function safeLS(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || fallback); } catch { return JSON.parse(fallback); } }
+function safeLSGet(key, fallback) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } }
+let savedCourses = safeLS('rm_saved', '[]');
+let recentCourses = safeLS('rm_recent', '[]');
+let records = safeLS('rm_records', '[]');
 let activeFilter = 'all';
 let currentCourseId = null;
 let recordStar = 0, recordDiff = '', recordWant = '';
-let firstSave = localStorage.getItem('rm_firstsave') !== '1';
+let firstSave = safeLSGet('rm_firstsave', '0') !== '1';
 
 // ── Supabase에서 코스 데이터 로드 ──
 // ── Supabase REST API 직접 호출 ──
@@ -615,9 +617,11 @@ loadCourses();
 initTicker();
 
 function saveState() {
-  localStorage.setItem('rm_saved', JSON.stringify(savedCourses));
-  localStorage.setItem('rm_recent', JSON.stringify(recentCourses));
-  localStorage.setItem('rm_records', JSON.stringify(records));
+  try {
+    localStorage.setItem('rm_saved', JSON.stringify(savedCourses));
+    localStorage.setItem('rm_recent', JSON.stringify(recentCourses));
+    localStorage.setItem('rm_records', JSON.stringify(records));
+  } catch(e) { /* Tracking Prevention 차단 시 무시 */ }
 }
 
 function addRecent(id) {
@@ -703,7 +707,7 @@ function toggleSave(id, btn) {
     savedCourses.push(id);
     btn.classList.add('saved'); btn.textContent = '♥';
     if (firstSave) {
-      firstSave = false; localStorage.setItem('rm_firstsave','1');
+      firstSave = false; try { localStorage.setItem('rm_firstsave','1'); } catch(e) {}
       showToast('💾 이 기기에 저장됐어요. 브라우저 초기화 시 사라질 수 있어요.');
     } else {
       showToast('💾 이 기기에 저장됐어요');
@@ -756,7 +760,7 @@ function toggleMiniCardSave() {
   const idx = savedCourses.indexOf(currentCourseId);
   if (idx === -1) savedCourses.push(currentCourseId);
   else savedCourses.splice(idx, 1);
-  localStorage.setItem('savedCourses', JSON.stringify(savedCourses));
+  try { localStorage.setItem('savedCourses', JSON.stringify(savedCourses)); } catch(e) {}
   const btn = document.getElementById('miniCardSave');
   const isSaved = savedCourses.includes(currentCourseId);
   btn.textContent = isSaved ? '♥' : '♡';
@@ -1064,7 +1068,7 @@ function toggleDetailSave() {
   } else {
     savedCourses.push(id);
     btn.className='detail-save-btn saved'; btn.textContent='♥ 저장됨';
-    if (firstSave) { firstSave=false; localStorage.setItem('rm_firstsave','1'); showToast('💾 이 기기에 저장됐어요. 브라우저 초기화 시 사라질 수 있어요.'); }
+    if (firstSave) { firstSave=false; try { localStorage.setItem('rm_firstsave','1'); } catch(e) {} showToast('💾 이 기기에 저장됐어요. 브라우저 초기화 시 사라질 수 있어요.'); }
     else showToast('💾 이 기기에 저장됐어요');
   }
   saveState(); renderList();
@@ -1200,7 +1204,7 @@ function renderMyPage() {
 
 // ── 후기 ──
 function getReviews(courseId) {
-  return JSON.parse(localStorage.getItem('rm_reviews_' + courseId) || '[]');
+  try { return JSON.parse(localStorage.getItem('rm_reviews_' + courseId) || '[]'); } catch(e) { return []; }
 }
 async function renderReviews(courseId) {
   const list = document.getElementById('reviewList');
@@ -1262,7 +1266,7 @@ function getBadgeStats() {
 }
 function checkBadges() {
   const { recordCount, savedCount, reviewCount, runTypes } = getBadgeStats();
-  const earned = JSON.parse(localStorage.getItem('rm_badges') || '[]');
+  let earned; try { earned = JSON.parse(localStorage.getItem('rm_badges') || '[]'); } catch(e) { earned = []; }
   let newBadge = false;
   BADGES.forEach(b => {
     if (!earned.includes(b.id) && b.check(recordCount, savedCount, reviewCount, runTypes)) {
@@ -1271,7 +1275,7 @@ function checkBadges() {
       showToast('🏅 새 뱃지 획득! ' + b.name);
     }
   });
-  if (newBadge) localStorage.setItem('rm_badges', JSON.stringify(earned));
+  if (newBadge) try { localStorage.setItem('rm_badges', JSON.stringify(earned)); } catch(e) {}
   return earned;
 }
 function renderBadgeTab(body, notice) {
@@ -2605,7 +2609,7 @@ function toggleMusicSave(id, title, artist, category) {
     saved.push({ id, title, artist, category });
     showToast('🔖 저장됐어요! 내 페이지 → 저장음악에서 확인하세요');
   }
-  localStorage.setItem('savedMusic', JSON.stringify(saved));
+  try { localStorage.setItem('savedMusic', JSON.stringify(saved)); } catch(e) {}
   renderMusicList(musicCache);
   if (document.getElementById('mypageOverlay')?.classList.contains('open')) renderMyPage();
 }
