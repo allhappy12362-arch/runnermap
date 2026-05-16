@@ -184,7 +184,10 @@
               onkeydown="onMusicTitleKey(event)"
               autocomplete="off">
           </div>
-          <input type="text" class="music-input" id="musicArtist" placeholder="아티스트">
+          <input type="text" class="music-input" id="musicArtist" placeholder="아티스트"
+              oninput="onMusicArtistInput(this.value)"
+              onkeydown="onMusicTitleKey(event)"
+              onblur="setTimeout(()=>{document.getElementById('musicAutocomplete').style.display='none'},150)">
         </div>
         <!-- 자동완성 (row 아래로 분리) -->
         <div class="music-autocomplete" id="musicAutocomplete"></div>
@@ -357,7 +360,9 @@
 
 <!-- 미니 카드 (핀 클릭 시 하단 슬라이드) -->
 <div class="mini-card" id="miniCard">
-  <div class="mini-card-handle"></div>
+  <div class="mini-card-handle" onclick="openFullDetail()">
+    <span class="mini-card-hint">↑ 눌러서 상세보기</span>
+  </div>
   <div class="mini-card-content">
     <div class="mini-card-info">
       <div class="mini-card-name" id="miniCardName"></div>
