@@ -138,8 +138,7 @@ async function showCourseRoute(id) {
 
   clearRouteOverlay();
 
-  const colorMap = { scenic: '#4d9fff', quiet: '#9d7fff', night: '#ff9d3d', workout: '#ff4d4d' };
-  const color = colorMap[c.type] || '#c8ff00';
+  const color = '#c8ff00';
 
   // 로딩 표시
   document.getElementById('routeInfoKm').textContent = '경로 불러오는 중...';
@@ -185,9 +184,9 @@ async function showCourseRoute(id) {
   activePolyline = new kakao.maps.Polyline({
     map: kakaoMap,
     path: linePath,
-    strokeWeight: 5,
-    strokeColor: color,
-    strokeOpacity: 0.88,
+    strokeWeight: 7,
+    strokeColor: '#c8ff00',
+    strokeOpacity: 0.95,
     strokeStyle: 'solid'
   });
 
@@ -230,20 +229,25 @@ async function showCourseRoute(id) {
 }
 
 function showKmMarkers(c) {
-  if (!c.kmMarkers || !c.kmMarkers.length) return;
-  c.kmMarkers.forEach(m => {
-    const pos = new kakao.maps.LatLng(m.pos[0], m.pos[1]);
-    const content = `<div style="
-      background:#0d0d0d;border:1px solid rgba(200,255,0,0.5);
-      border-radius:50%;width:22px;height:22px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:9px;font-weight:700;color:#c8ff00;
-      font-family:'DM Mono',monospace;
-    ">${m.km}</div>`;
-    const overlay = new kakao.maps.CustomOverlay({ position: pos, content, yAnchor: 0.5, zIndex: 4 });
-    overlay.setMap(kakaoMap);
-    activeRouteMarkers.push(overlay);
-  });
+  if (!c.path || !c.path.length) return;
+  function haversine(p1, p2) {
+    const R = 6371000, toRad = x => x * Math.PI / 180;
+    const dLat = toRad(p2[0]-p1[0]), dLng = toRad(p2[1]-p1[1]);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(p1[0]))*Math.cos(toRad(p2[0]))*Math.sin(dLng/2)**2;
+    return R * 2 * Math.asin(Math.sqrt(a));
+  }
+  let dist = 0, nextKm = 1;
+  for (let i = 1; i < c.path.length; i++) {
+    dist += haversine(c.path[i-1], c.path[i]);
+    if (dist >= nextKm * 1000) {
+      const pos = new kakao.maps.LatLng(c.path[i][0], c.path[i][1]);
+      const content = `<div style="background:#0d0d0d;border:2px solid #c8ff00;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#c8ff00;font-family:'DM Mono',monospace;box-shadow:0 0 6px rgba(200,255,0,0.5);">${nextKm}</div>`;
+      const overlay = new kakao.maps.CustomOverlay({ position: pos, content, yAnchor: 0.5, zIndex: 4 });
+      overlay.setMap(kakaoMap);
+      activeRouteMarkers.push(overlay);
+      nextKm++;
+    }
+  }
 }
 
 function showFacilityMarkers(c, linePath) {
@@ -293,11 +297,15 @@ function clearRouteOverlay() {
 }
 
 let myLocationOverlay = null;
+let myLocationWatchId = null;
+
+const myRunnerSVG = '<div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;pointer-events:none;"><div style="position:absolute;width:50px;height:50px;border-radius:50%;background:rgba(200,255,0,0.18);animation:myLocPulse 1.6s ease-out infinite;top:-3px;left:-3px;"></div><div style="position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(200,255,0,0.25);animation:myLocPulse 1.6s ease-out infinite 0.4s;top:4px;left:4px;"></div><svg width="28" height="36" viewBox="-14 -18 28 36" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:2;"><circle cx="2" cy="-12" r="4.5" fill="#c8ff00"/><line x1="1" y1="-8" x2="-2" y2="2" stroke="#c8ff00" stroke-width="2.8" stroke-linecap="round"/><line x1="1" y1="-4" x2="9" y2="-9" stroke="#c8ff00" stroke-width="2.3" stroke-linecap="round"/><line x1="0" y1="-4" x2="-7" y2="-1" stroke="#c8ff00" stroke-width="2.3" stroke-linecap="round"/><line x1="-2" y1="2" x2="6" y2="10" stroke="#c8ff00" stroke-width="2.5" stroke-linecap="round"/><line x1="-2" y1="2" x2="-8" y2="9" stroke="#c8ff00" stroke-width="2.5" stroke-linecap="round"/></svg><style>@keyframes myLocPulse{0%{transform:scale(0.5);opacity:0.9}100%{transform:scale(2);opacity:0}}</style></div>';
 
 function moveToMyLocation() {
   if (!kakaoMap) return;
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
+  if (!navigator.geolocation) { showToast('이 기기는 GPS를 지원하지 않아요'); return; }
+  if (myLocationWatchId !== null) { navigator.geolocation.clearWatch(myLocationWatchId); myLocationWatchId = null; }
+  myLocationWatchId = navigator.geolocation.watchPosition(pos => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       myLat = lat; myLng = lng; // 러닝 시작 시 재사용
@@ -335,16 +343,19 @@ function moveToMyLocation() {
           }
         </style>`;
 
-      myLocationOverlay = new kakao.maps.CustomOverlay({
-        position: myPos,
-        content,
-        zIndex: 10,
-        yAnchor: 0.5,
-        xAnchor: 0.5
-      });
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    myLat = lat; myLng = lng;
+    const myPos = new kakao.maps.LatLng(lat, lng);
+    if (myLocationOverlay) {
+      myLocationOverlay.setPosition(myPos);
+    } else {
+      kakaoMap.setCenter(myPos);
+      kakaoMap.setLevel(4);
+      myLocationOverlay = new kakao.maps.CustomOverlay({ position: myPos, content: myRunnerSVG, zIndex: 10, yAnchor: 0.5, xAnchor: 0.5 });
       myLocationOverlay.setMap(kakaoMap);
-    }, () => { showToast('위치 권한이 필요해요 🙏'); });
-  }
+    }
+  }, () => { showToast('위치 권한이 필요해요 🙏'); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
 }
 // ── 데이터 로드 ──
 function safeLS(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || fallback); } catch { return JSON.parse(fallback); } }
@@ -2512,6 +2523,17 @@ function onMusicArtistInput(val) {
       <span class="music-ac-likes">♪ ${m.likes || 0}</span>
     </div>
   `).join('');
+}
+
+function onMusicArtistInput(val) {
+  musicAcIndex = -1;
+  const ac = document.getElementById('musicAutocomplete');
+  if (!val || val.length < 1 || musicCache.length === 0) { ac.innerHTML = ''; ac.style.display = 'none'; return; }
+  const q = val.toLowerCase();
+  const matches = musicCache.filter(m => (m.artist || '').toLowerCase().includes(q)).slice(0, 6);
+  if (matches.length === 0) { ac.innerHTML = ''; ac.style.display = 'none'; return; }
+  ac.style.display = 'block';
+  ac.innerHTML = matches.map((m, i) => `<div class="music-ac-item" data-idx="${i}" onmousedown="selectMusicAc('${m.title.replace(/'/g,"\'")}','${(m.artist||'').replace(/'/g,"\'")}','${m.id}')"><span class="music-ac-title">${m.title}</span><span class="music-ac-artist">${m.artist || ''}</span><span class="music-ac-likes">♪ ${m.likes || 0}</span></div>`).join('');
 }
 
 function onMusicTitleKey(e) {
