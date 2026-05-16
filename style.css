@@ -1556,9 +1556,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
 }
 .mini-card.open { transform: translateY(0); }
-.mini-card-handle { display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 10px 0 6px; cursor: pointer; gap: 4px; }
+.mini-card-handle { display: flex; justify-content: center; padding: 10px 0 6px; }
 .mini-card-handle::after { content:''; width:36px; height:4px; background:var(--border2); border-radius:2px; display:block; }
-.mini-card-hint { font-size: 11px; color: var(--text3); letter-spacing: 0.3px; opacity: 0.7; }
 .mini-card-content { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .mini-card-info { flex: 1; min-width: 0; }
 .mini-card-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
@@ -1573,13 +1572,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
   display: flex; align-items: center; justify-content: center;
 }
 .mini-card-save.saved { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-.mini-card-detail {
-  padding: 8px 14px; border-radius: var(--radius-sm);
-  background: var(--bg3); border: 0.5px solid var(--border2);
-  color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer;
-  white-space: nowrap;
+.mini-card-full-detail {
+  height: 46px; padding: 0 18px; border-radius: var(--radius-sm);
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  color: var(--text); font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; white-space: nowrap;
+  letter-spacing: -0.3px;
 }
-.mini-card-detail:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.mini-card-full-detail:hover { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.mini-card-full-detail:active { transform: scale(0.96); }
 .mini-card-btns { display: flex; gap: 8px; }
 @media (min-width: 768px) {
   .mini-card { max-width: 600px; left: 50%; transform: translateX(-50%) translateY(100%); right: auto; width: 100%; }

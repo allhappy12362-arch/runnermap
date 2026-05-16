@@ -184,10 +184,7 @@
               onkeydown="onMusicTitleKey(event)"
               autocomplete="off">
           </div>
-          <input type="text" class="music-input" id="musicArtist" placeholder="아티스트"
-              oninput="onMusicArtistInput(this.value)"
-              onkeydown="onMusicTitleKey(event)"
-              onblur="setTimeout(()=>{document.getElementById('musicAutocomplete').style.display='none'},150)">
+          <input type="text" class="music-input" id="musicArtist" placeholder="아티스트">
         </div>
         <!-- 자동완성 (row 아래로 분리) -->
         <div class="music-autocomplete" id="musicAutocomplete"></div>
@@ -369,10 +366,10 @@
     </div>
     <div class="mini-card-actions">
       <button class="mini-card-save" id="miniCardSave" onclick="toggleMiniCardSave()">♡</button>
-      <button class="mini-card-detail" onclick="openFullDetail()">상세 →</button>
     </div>
   </div>
   <div class="mini-card-btns">
+    <button class="mini-card-full-detail" onclick="openFullDetail()">📋 상세보기</button>
     <button class="detail-run-btn" style="flex:1" onclick="startRunWithCourse()">🏃 이 코스 뛰기</button>
   </div>
 </div>
