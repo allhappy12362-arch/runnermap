@@ -147,37 +147,32 @@ async function showCourseRoute(id) {
 
   let linePath;
 
-  // path를 최대 150m 간격으로 보간 — OSRM 없이도 경로가 실제 궤적을 따름
-  function interpolatePath(path) {
-    function haversine(p1, p2) {
-      const R = 6371000, toRad = x => x * Math.PI / 180;
-      const dLat = toRad(p2[0] - p1[0]), dLng = toRad(p2[1] - p1[1]);
-      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(p1[0]))*Math.cos(toRad(p2[0]))*Math.sin(dLng/2)**2;
-      return R * 2 * Math.asin(Math.sqrt(a));
-    }
-    const MAX_GAP = 150, result = [path[0]];
-    for (let i = 0; i < path.length - 1; i++) {
-      const gap = haversine(path[i], path[i+1]);
-      if (gap > MAX_GAP) {
-        const n = Math.ceil(gap / MAX_GAP);
-        for (let j = 1; j < n; j++) {
-          const t = j / n;
-          result.push([path[i][0] + (path[i+1][0]-path[i][0])*t, path[i][1] + (path[i+1][1]-path[i][1])*t]);
-        }
-      }
-      result.push(path[i+1]);
-    }
-    return result;
+  // 직선 보간 폴백 — OSRM 실패 시 사용
+  function fallbackPath(path) {
+    return path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
   }
 
   if (_osrmCache[id]) {
     linePath = _osrmCache[id];
   } else {
-    // 1차: 보간된 path를 기본 경로로 사용 (OSRM 불필요, 즉시 표시)
-    const interpolated = interpolatePath(c.path);
-    linePath = interpolated.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
+    // OSRM 맵매칭 — GPS 좌표를 실제 도로에 붙임
+    try {
+      const coords = c.path.map(([lat, lng]) => `${lng},${lat}`).join(';');
+      const radiuses = c.path.map(() => 25).join(';');
+      const url = `https://router.project-osrm.org/match/v1/foot/${coords}?radiuses=${radiuses}&overview=full&geometries=geojson&annotations=false`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
+        // 여러 matching segment 합치기
+        const allCoords = data.matchings.flatMap(m => m.geometry.coordinates);
+        linePath = allCoords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
+      } else {
+        linePath = fallbackPath(c.path);
+      }
+    } catch(e) {
+      linePath = fallbackPath(c.path);
+    }
     _osrmCache[id] = linePath;
-
   }
 
   // Polyline 그리기
