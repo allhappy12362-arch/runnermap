@@ -343,10 +343,6 @@ function moveToMyLocation() {
           }
         </style>`;
 
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    myLat = lat; myLng = lng;
-    const myPos = new kakao.maps.LatLng(lat, lng);
     if (myLocationOverlay) {
       myLocationOverlay.setPosition(myPos);
     } else {
