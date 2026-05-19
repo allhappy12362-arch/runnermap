@@ -147,31 +147,10 @@ async function showCourseRoute(id) {
 
   let linePath;
 
-  // 직선 보간 폴백 — OSRM 실패 시 사용
-  function fallbackPath(path) {
-    return path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
-  }
-
   if (_osrmCache[id]) {
     linePath = _osrmCache[id];
   } else {
-    // OSRM 맵매칭 — GPS 좌표를 실제 도로에 붙임
-    try {
-      const coords = c.path.map(([lat, lng]) => `${lng},${lat}`).join(';');
-      const radiuses = c.path.map(() => 25).join(';');
-      const url = `https://router.project-osrm.org/match/v1/foot/${coords}?radiuses=${radiuses}&overview=full&geometries=geojson&annotations=false`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
-        // 여러 matching segment 합치기
-        const allCoords = data.matchings.flatMap(m => m.geometry.coordinates);
-        linePath = allCoords.map(([lng, lat]) => new kakao.maps.LatLng(lat, lng));
-      } else {
-        linePath = fallbackPath(c.path);
-      }
-    } catch(e) {
-      linePath = fallbackPath(c.path);
-    }
+    linePath = c.path.map(([lat, lng]) => new kakao.maps.LatLng(lat, lng));
     _osrmCache[id] = linePath;
   }
 
@@ -1415,7 +1394,26 @@ async function submitReport() {
     showToast('러닝 경로가 없어요. 러닝 후 다시 시도해주세요 🏃'); return;
   }
 
-  const pathToSave = reportOsrmPath.length >= 2 ? reportOsrmPath : reportWaypoints;
+  // Douglas-Peucker 압축 — 모양 유지하면서 좌표 수 줄이기
+  function dpCompress(pts, epsilon) {
+    if (pts.length < 3) return pts;
+    let maxD = 0, idx = 0;
+    const [p1, p2] = [pts[0], pts[pts.length - 1]];
+    const dx = p2[1] - p1[1], dy = p2[0] - p1[0];
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const d = Math.abs(dy * pts[i][1] - dx * pts[i][0] + p2[1] * p1[0] - p2[0] * p1[1]) / len;
+      if (d > maxD) { maxD = d; idx = i; }
+    }
+    if (maxD > epsilon) {
+      return [...dpCompress(pts.slice(0, idx + 1), epsilon).slice(0, -1),
+              ...dpCompress(pts.slice(idx), epsilon)];
+    }
+    return [p1, p2];
+  }
+  const rawPath = reportWaypoints.length >= 2 ? reportWaypoints : [];
+  const compressed = rawPath.length > 100 ? dpCompress(rawPath, 0.00005) : rawPath;
+  const pathToSave = compressed.length >= 2 ? compressed : rawPath;
   const startLat = reportWaypoints[0][0];
   const startLng = reportWaypoints[0][1];
 
